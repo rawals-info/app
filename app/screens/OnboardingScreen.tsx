@@ -9,6 +9,8 @@ import {
   Pressable,
   Image,
   ImageStyle,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
 } from "react-native"
 
 import { Screen } from "@/components/Screen"
@@ -55,17 +57,24 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = ({ navigation }) => {
   // Auto-scroll every 4s
   useEffect(() => {
     timerRef.current = setInterval(() => {
-      setIndex((prev) => {
-        const next = prev === CARDS.length - 1 ? 0 : prev + 1
-        flatListRef.current?.scrollToIndex({ index: next, animated: true })
-        return next
-      })
+      if (index < CARDS.length - 1) {
+        scrollToIndex(index + 1)
+      } else {
+        scrollToIndex(0)
+      }
     }, 4000)
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current)
     }
-  }, [])
+  }, [index])
+
+  function scrollToIndex(idx: number) {
+    flatListRef.current?.scrollToOffset({
+      offset: idx * width,
+      animated: true,
+    })
+  }
 
   function stopAutoScroll() {
     if (timerRef.current) {
@@ -82,14 +91,22 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = ({ navigation }) => {
   function handleNext() {
     stopAutoScroll()
     if (index < CARDS.length - 1) {
-      const next = index + 1
-      flatListRef.current?.scrollToIndex({ index: next, animated: true })
-      setIndex(next)
+      scrollToIndex(index + 1)
     } else {
       navigation?.replace?.("OnboardingGoal")
     }
   }
 
+  function handleScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
+    const newIndex = Math.round(event.nativeEvent.contentOffset.x / width)
+    if (newIndex !== index) {
+      setIndex(newIndex)
+    }
+  }
+
+  // Determine button text based on current index
+  const buttonText = index === CARDS.length - 1 ? "Get Started" : "Next"
+  
   return (
     <Screen preset="fixed" safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
       <View style={{ flex: 1 }} onTouchStart={stopAutoScroll}>
@@ -117,26 +134,32 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = ({ navigation }) => {
                   style={$illustration}
                   resizeMode="contain"
                 />
-
-                {/* Dots inside card */}
-                <View style={$dotsContainerInCard}>
-                  {CARDS.map((_, i) => (
-                    <View key={i} style={[themed($dot), i === index && themed($dotActive)]} />
-                  ))}
-                </View>
               </View>
             </View>
           )}
           onScrollBeginDrag={stopAutoScroll}
-          onMomentumScrollEnd={(ev) => {
-            const newIndex = Math.round(ev.nativeEvent.contentOffset.x / width)
-            setIndex(newIndex)
+          onMomentumScrollEnd={handleScroll}
+          onScroll={(event) => {
+            // Update index during scroll for smoother dot transitions
+            const offsetX = event.nativeEvent.contentOffset.x
+            const newIndex = Math.round(offsetX / width)
+            if (newIndex !== index && newIndex >= 0 && newIndex < CARDS.length) {
+              setIndex(newIndex)
+            }
           }}
+          scrollEventThrottle={16} // For smooth updates
         />
+
+        {/* Dots indicator - moved outside FlatList */}
+        <View style={$dotsContainer}>
+          {CARDS.map((_, i) => (
+            <View key={i} style={[themed($dot), i === index && themed($dotActive)]} />
+          ))}
+        </View>
 
         {/* Floating CTA */}
         <Pressable style={themed($cta)} onPress={handleNext}>
-          <Text text={index === CARDS.length - 1 ? "Get Started" : "Next"} weight="medium" />
+          <Text text={buttonText} weight="medium" />
         </Pressable>
       </View>
     </Screen>
@@ -173,12 +196,15 @@ const $body: ThemedStyle<TextStyle> = ({ spacing }) => ({
   lineHeight: 24,
 })
 
-const $dotsContainerInCard: ViewStyle = {
+const $dotsContainer: ViewStyle = {
   flexDirection: "row",
   justifyContent: "center",
   alignItems: "center",
   gap: 6,
-  marginTop: 24,
+  position: "absolute",
+  bottom: 80,
+  left: 0,
+  right: 0,
 }
 
 const $dot: ThemedStyle<ViewStyle> = ({ colors }) => ({
