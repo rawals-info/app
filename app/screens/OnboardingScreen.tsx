@@ -11,23 +11,30 @@ import {
   ImageStyle,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  StatusBar,
+  Platform,
 } from "react-native"
+import { LinearGradient } from "expo-linear-gradient"
 
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
+import { Button } from "@/components/Button"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
 import { setHasOnboarded } from "@/utils/persistence"
+import { colors } from "@/theme/colors"
+import { layout, shadowElevation } from "@/theme/styleHelpers"
 
-const { width } = Dimensions.get("window")
+const { width, height } = Dimensions.get("window")
 
+// Enhanced card data with images and accent colors
 const CARDS = [
   {
     id: "1",
-    title: "🌿 You’re Not Alone — And You’re Not Broken",
+    title: "🌿 You're Not Alone — And You're Not Broken",
     body:
-      "Over 77 million people in India live with diabetes — you’re in good company. It’s not your fault; modern lifestyle factors like stress & processed food play a big role. The good news? Thousands reverse Type-2 every year through simple habit changes.",
+      "Over 77 million people in India live with diabetes — you're in good company. It's not your fault; modern lifestyle factors like stress & processed food play a big role. The good news? Thousands reverse Type-2 every year through simple habit changes.",
   },
   {
     id: "2",
@@ -51,7 +58,7 @@ interface OnboardingScreenProps {
 export const OnboardingScreen: FC<OnboardingScreenProps> = ({ navigation }) => {
   const flatListRef = useRef<FlatList>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
-  const { themed } = useAppTheme()
+  const { themed, theme } = useAppTheme()
   const [index, setIndex] = useState(0)
 
   // Auto-scroll every 4s
@@ -106,136 +113,185 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = ({ navigation }) => {
 
   // Determine button text based on current index
   const buttonText = index === CARDS.length - 1 ? "Get Started" : "Next"
+  const currentCard = CARDS[index]
   
   return (
-    <Screen preset="fixed" safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
-      <View style={{ flex: 1 }} onTouchStart={stopAutoScroll}>
-        {/* --- Onboarding Slides --- */}
-        <FlatList
-          ref={flatListRef}
-          data={CARDS}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={[{ width }, $slideContainer]}>
-              <View style={themed($card)}>
-                <Pressable style={themed($skipInCard)} onPress={finish} hitSlop={10}>
-                  <Text text="Skip" weight="medium" />
-                </Pressable>
-
-                <Text preset="heading" text={item.title} style={themed($title)} />
-                <Text size="lg" text={item.body} style={themed($body)} />
-
-                {/* placeholder illustration */}
-                <Image
-                  source={require("@assets/placeholder/onboarding-people.png")}
-                  style={$illustration}
-                  resizeMode="contain"
-                />
+    <>
+      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+      <Screen preset="fixed" contentContainerStyle={$container} safeAreaEdges={["bottom"]}>
+        <View style={{ flex: 1 }} onTouchStart={stopAutoScroll}>
+          {/* --- Header --- */}
+          <View style={$header}>
+            <Button
+              text="Skip"
+              preset="ghost"
+              size="small"
+              style={$skipButton}
+              onPress={finish}
+            />
+          </View>
+          
+          {/* --- Onboarding Slides --- */}
+          <FlatList
+            ref={flatListRef}
+            data={CARDS}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <View style={[{ width }, $slideContainer]}>
+                <View style={$cardContent}>
+                  <View style={$contentContainer}>
+                    <Text preset="headline" text={item.title} style={$title} />
+                    <Text preset="body" text={item.body} style={$body} />
+                  </View>
+                </View>
               </View>
+            )}
+            onScrollBeginDrag={stopAutoScroll}
+            onMomentumScrollEnd={handleScroll}
+            onScroll={(event) => {
+              // Update index during scroll for smoother dot transitions
+              const offsetX = event.nativeEvent.contentOffset.x
+              const newIndex = Math.round(offsetX / width)
+              if (newIndex !== index && newIndex >= 0 && newIndex < CARDS.length) {
+                setIndex(newIndex)
+              }
+            }}
+            scrollEventThrottle={16} // For smooth updates
+          />
+
+          {/* Bottom controls container */}
+          <View style={$controlsContainer}>
+            {/* Dots indicator */}
+            <View style={$dotsContainer}>
+              {CARDS.map((_, i) => (
+                <View 
+                  key={i} 
+                  style={[
+                    $dot, 
+                    i === index && $dotActive,
+                    { backgroundColor: i === index ? '#2AA199' : 'rgba(42, 161, 153, 0.3)' }
+                  ]} 
+                />
+              ))}
             </View>
-          )}
-          onScrollBeginDrag={stopAutoScroll}
-          onMomentumScrollEnd={handleScroll}
-          onScroll={(event) => {
-            // Update index during scroll for smoother dot transitions
-            const offsetX = event.nativeEvent.contentOffset.x
-            const newIndex = Math.round(offsetX / width)
-            if (newIndex !== index && newIndex >= 0 && newIndex < CARDS.length) {
-              setIndex(newIndex)
-            }
-          }}
-          scrollEventThrottle={16} // For smooth updates
-        />
 
-        {/* Dots indicator - moved outside FlatList */}
-        <View style={$dotsContainer}>
-          {CARDS.map((_, i) => (
-            <View key={i} style={[themed($dot), i === index && themed($dotActive)]} />
-          ))}
+            {/* CTA Button */}
+            <Button 
+              text={buttonText}
+              preset="primary"
+              style={$ctaButton}
+              onPress={handleNext}
+            />
+          </View>
         </View>
-
-        {/* Floating CTA */}
-        <Pressable style={themed($cta)} onPress={handleNext}>
-          <Text text={buttonText} weight="medium" />
-        </Pressable>
-      </View>
-    </Screen>
+      </Screen>
+    </>
   )
 }
 
+// Styles
 const $container: ViewStyle = {
   flex: 1,
+  backgroundColor: '#FFFFFF',
+  paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0,
+}
+
+const $header: ViewStyle = {
+  ...layout.rowBetween,
+  paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 0 + 20 : 50,
+  paddingHorizontal: 24,
+  paddingBottom: 20,
 }
 
 const $slideContainer: ViewStyle = {
+  flex: 1,
   justifyContent: "center",
   alignItems: "center",
 }
 
-const $card: ThemedStyle<ViewStyle> = ({ spacing, colors }) => ({
-  borderRadius: 32,
-  borderWidth: 1,
-  borderColor: colors.border,
-  paddingVertical: spacing.xl,
-  paddingHorizontal: spacing.lg,
-  width: width * 0.85,
-  minHeight: "85%",
-  alignSelf: "center",
-  justifyContent: "flex-start",
-})
+const $cardContent: ViewStyle = {
+  flex: 1,
+  width: '100%',
+  paddingHorizontal: 32,
+  paddingVertical: 60, // Increased vertical padding
+  justifyContent: 'center',
+  alignItems: 'center', // Center content horizontally
+}
 
-const $title: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
-  color: colors.tint,
-  marginBottom: spacing.sm,
-})
+const $contentContainer: ViewStyle = {
+  maxWidth: 500, // Limit width on larger screens
+  width: '100%',
+  alignItems: 'center', // Center text
+}
 
-const $body: ThemedStyle<TextStyle> = ({ spacing }) => ({
-  lineHeight: 24,
-})
+const $title: TextStyle = {
+  fontSize: 26, // Slightly larger
+  lineHeight: 34,
+  color: '#000000',
+  marginBottom: 24,
+  fontWeight: '600', // SemiBold works better with Poppins
+  letterSpacing: 0,
+  textAlign: 'center', // Center text
+}
 
-const $dotsContainer: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "center",
-  alignItems: "center",
-  gap: 6,
-  position: "absolute",
-  bottom: 80,
+const $body: TextStyle = {
+  fontSize: 16,
+  lineHeight: 26, // Increased line height for Poppins
+  color: '#333333',
+  letterSpacing: 0,
+  marginBottom: 16,
+  textAlign: 'center', // Center text
+}
+
+const $controlsContainer: ViewStyle = {
+  position: 'absolute',
+  bottom: 0,
   left: 0,
   right: 0,
+  paddingBottom: Platform.OS === 'ios' ? 34 : 24,
+  paddingHorizontal: 24,
+  ...layout.rowBetween,
+  backgroundColor: 'rgba(255,255,255,0.95)',
+  paddingTop: 16,
 }
 
-const $dot: ThemedStyle<ViewStyle> = ({ colors }) => ({
+const $dotsContainer: ViewStyle = {
+  ...layout.row,
+  gap: 8,
+}
+
+const $dot: ViewStyle = {
   width: 8,
   height: 8,
   borderRadius: 4,
-  backgroundColor: colors.tintInactive,
-})
+  backgroundColor: 'rgba(255,255,255,0.5)',
+}
 
-const $dotActive: ThemedStyle<ViewStyle> = ({ colors }) => ({
-  backgroundColor: colors.tint,
-})
+const $dotActive: ViewStyle = {
+  width: 24,
+  backgroundColor: '#ffffff',
+}
 
-const $cta: ThemedStyle<ViewStyle> = ({ spacing, colors }) => ({
-  position: "absolute",
-  bottom: spacing.xl,
-  right: spacing.lg,
-  backgroundColor: colors.tint,
-  paddingHorizontal: spacing.lg,
-  paddingVertical: spacing.sm,
-  borderRadius: 24,
-})
+const $ctaButton: ViewStyle = {
+  ...shadowElevation(4),
+  minWidth: 120,
+}
 
-const $skipInCard: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  position: "absolute",
-  top: spacing.sm,
-  right: spacing.sm,
-})
+const $ctaText: TextStyle = {
+  color: '#333',
+  fontWeight: 'bold',
+  fontSize: 16,
+}
 
-const $illustration: ImageStyle = {
-  flex: 1,
-  width: "100%",
-  marginTop: 24,
+const $skipButton: ViewStyle = {
+  alignSelf: 'flex-end',
+}
+
+const $skipText: TextStyle = {
+  color: '#ffffff',
+  opacity: 0.8,
+  fontSize: 16,
 } 

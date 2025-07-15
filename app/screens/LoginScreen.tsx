@@ -1,6 +1,7 @@
 import { ComponentType, FC, useEffect, useMemo, useRef, useState } from "react"
 // eslint-disable-next-line no-restricted-imports
-import { Pressable, TextInput, TextStyle, ViewStyle } from "react-native"
+import { Pressable, TextInput, TextStyle, ViewStyle, StatusBar, Platform } from "react-native"
+import { Ionicons } from '@expo/vector-icons'
 
 import { Button } from "@/components/Button"
 import { PressableIcon } from "@/components/Icon"
@@ -13,6 +14,7 @@ import { saveAuthToken } from "@/utils/persistence"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
+import { layout, shadowElevation } from "@/theme/styleHelpers"
 
 interface LoginScreenProps {
   navigation?: { navigate: (route: string) => void }
@@ -36,8 +38,8 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
   useEffect(() => {
     // Here is where you could fetch credentials from keychain or storage
     // and pre-fill the form fields.
-    setAuthEmail("ignite@infinite.red")
-    setAuthPassword("ign1teIsAwes0m3")
+    setAuthEmail("")
+    setAuthPassword("")
   }, [setAuthEmail])
 
   const error = isSubmitted ? validationError : ""
@@ -59,7 +61,6 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
     } else {
       // Display API error
       // For simplicity we'll reuse validationError prop to show API issues
-      // but we could add separate state.
       // eslint-disable-next-line no-console
       console.warn("Login failed", result)
     }
@@ -82,89 +83,168 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
   )
 
   return (
-    <Screen
-      preset="auto"
-      contentContainerStyle={themed($screenContentContainer)}
-      safeAreaEdges={["top", "bottom"]}
-    >
-      <Text testID="login-heading" tx="loginScreen:logIn" preset="heading" style={themed($logIn)} />
-      <Text tx="loginScreen:enterDetails" preset="subheading" style={themed($enterDetails)} />
-      {attemptsCount > 2 && (
-        <Text tx="loginScreen:hint" size="sm" weight="light" style={themed($hint)} />
-      )}
+    <>
+      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+      <Screen
+        preset="fixed"
+        contentContainerStyle={$container}
+        safeAreaEdges={["top", "bottom"]}
+      >
+        {/* Back button */}
+        <Pressable 
+          style={$backButton} 
+          onPress={() => navigation?.navigate?.("OnboardingGoal")} 
+          hitSlop={15}
+        >
+          <Ionicons name="arrow-back" size={24} color="#2AA199" />
+        </Pressable>
 
-      <TextField
-        value={authEmail}
-        onChangeText={setAuthEmail}
-        containerStyle={themed($textField)}
-        autoCapitalize="none"
-        autoComplete="email"
-        autoCorrect={false}
-        keyboardType="email-address"
-        labelTx="loginScreen:emailFieldLabel"
-        placeholderTx="loginScreen:emailFieldPlaceholder"
-        helper={error}
-        status={error ? "error" : undefined}
-        onSubmitEditing={() => authPasswordInput.current?.focus()}
-      />
-
-      <TextField
-        ref={authPasswordInput}
-        value={authPassword}
-        onChangeText={setAuthPassword}
-        containerStyle={themed($textField)}
-        autoCapitalize="none"
-        autoComplete="password"
-        autoCorrect={false}
-        secureTextEntry={isAuthPasswordHidden}
-        labelTx="loginScreen:passwordFieldLabel"
-        placeholderTx="loginScreen:passwordFieldPlaceholder"
-        onSubmitEditing={login}
-        RightAccessory={PasswordRightAccessory}
-      />
-
-      <Button
-        testID="login-button"
-        tx="loginScreen:tapToLogIn"
-        style={themed($tapButton)}
-        preset="reversed"
-        onPress={login}
-      />
-
-      <Pressable onPress={() => navigation?.navigate?.("Signup")}>
-        <Text
-          text="Don't have an account? Sign up"
-          size="sm"
-          weight="medium"
-          style={themed($hint)}
+        <Text 
+          testID="login-heading" 
+          text="Welcome Back" 
+          preset="headline" 
+          style={$heading}
         />
-      </Pressable>
-    </Screen>
+        
+        <Text 
+          text="Sign in to your account" 
+          preset="body" 
+          style={$subheading}
+        />
+
+        <TextField
+          value={authEmail}
+          onChangeText={setAuthEmail}
+          containerStyle={$textField}
+          autoCapitalize="none"
+          autoComplete="email"
+          autoCorrect={false}
+          keyboardType="email-address"
+          label="Email"
+          placeholder="Enter your email address"
+          helper={error}
+          status={error ? "error" : undefined}
+          onSubmitEditing={() => authPasswordInput.current?.focus()}
+          inputWrapperStyle={$inputWrapper}
+        />
+
+        <TextField
+          ref={authPasswordInput}
+          value={authPassword}
+          onChangeText={setAuthPassword}
+          containerStyle={$textField}
+          autoCapitalize="none"
+          autoComplete="password"
+          autoCorrect={false}
+          secureTextEntry={isAuthPasswordHidden}
+          label="Password"
+          placeholder="Enter your password"
+          onSubmitEditing={login}
+          RightAccessory={PasswordRightAccessory}
+          inputWrapperStyle={$inputWrapper}
+        />
+
+        <Button
+          testID="login-button"
+          text="Log In"
+          style={$loginButton}
+          preset="primary"
+          onPress={login}
+        />
+
+        <Pressable 
+          onPress={() => navigation?.navigate?.("Signup")}
+          style={$signupContainer}
+        >
+          <Text
+            text="Don't have an account? "
+            preset="body"
+            style={$signupText}
+          />
+          <Text
+            text="Sign up"
+            preset="body"
+            weight="semiBold"
+            style={$signupLink}
+          />
+        </Pressable>
+      </Screen>
+    </>
   )
 }
 
-const $screenContentContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  paddingVertical: spacing.xxl,
-  paddingHorizontal: spacing.lg,
-})
+const $container: ViewStyle = {
+  flex: 1,
+  backgroundColor: '#FFFFFF',
+  paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0,
+  paddingHorizontal: 24,
+}
 
-const $logIn: ThemedStyle<TextStyle> = ({ spacing }) => ({
-  marginBottom: spacing.sm,
-})
+const $backButton: ViewStyle = {
+  position: 'absolute',
+  top: Platform.OS === 'android' ? StatusBar.currentHeight || 0 + 16 : 16,
+  left: 24,
+  zIndex: 10,
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  ...layout.center,
+  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+  ...shadowElevation(2),
+}
 
-const $enterDetails: ThemedStyle<TextStyle> = ({ spacing }) => ({
-  marginBottom: spacing.lg,
-})
+const $heading: TextStyle = {
+  fontSize: 26,
+  lineHeight: 34,
+  fontWeight: '600', // SemiBold works better with Poppins
+  color: '#000000',
+  letterSpacing: 0,
+  marginTop: 80,
+  marginBottom: 8,
+  textAlign: 'center',
+}
 
-const $hint: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
-  color: colors.tint,
-  marginBottom: spacing.md,
-})
+const $subheading: TextStyle = {
+  fontSize: 16,
+  lineHeight: 24,
+  color: '#333333',
+  marginBottom: 40,
+  textAlign: 'center',
+}
 
-const $textField: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  marginBottom: spacing.lg,
-})
+const $textField: ViewStyle = {
+  marginBottom: 20,
+}
 
-const $tapButton: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  marginTop: spacing.xs,
-})
+const $inputWrapper: ViewStyle = {
+  borderWidth: 2,
+  borderColor: '#DDDDDD',
+  borderRadius: 12,
+  backgroundColor: '#FFFFFF',
+  paddingHorizontal: 16,
+  paddingVertical: 12,
+  ...shadowElevation(1),
+}
+
+const $loginButton: ViewStyle = {
+  height: 50,
+  marginTop: 16,
+  marginBottom: 24,
+  ...shadowElevation(3),
+}
+
+const $signupContainer: ViewStyle = {
+  flexDirection: 'row',
+  justifyContent: 'center',
+  marginTop: 8,
+}
+
+const $signupText: TextStyle = {
+  fontSize: 16,
+  color: '#333333',
+}
+
+const $signupLink: TextStyle = {
+  fontSize: 16,
+  color: '#2AA199',
+}
