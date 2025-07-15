@@ -4,7 +4,7 @@
 import { Sequelize } from 'sequelize';
 
 // Direct connection URL
-const databaseUrl = 'postgresql://neondb_owner:npg_LO9C1TDHXthr@ep-frosty-hat-a1j1e31f-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
+const databaseUrl = ''
 
 console.log('Attempting direct connection to:', databaseUrl);
 
