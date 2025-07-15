@@ -1,6 +1,6 @@
 import { ComponentType, FC, useEffect, useMemo, useRef, useState } from "react"
 // eslint-disable-next-line no-restricted-imports
-import { TextInput, TextStyle, ViewStyle } from "react-native"
+import { Pressable, TextInput, TextStyle, ViewStyle } from "react-native"
 
 import { Button } from "@/components/Button"
 import { PressableIcon } from "@/components/Icon"
@@ -8,13 +8,18 @@ import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { TextField, type TextFieldAccessoryProps } from "@/components/TextField"
 import { useAuth } from "@/context/AuthContext"
+import { api } from "@/services/api"
+import { saveAuthToken } from "@/utils/persistence"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
 
-interface LoginScreenProps extends AppStackScreenProps<"Login"> {}
+interface LoginScreenProps {
+  navigation?: { navigate: (route: string) => void }
+  route?: unknown
+}
 
-export const LoginScreen: FC<LoginScreenProps> = () => {
+export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
   const authPasswordInput = useRef<TextInput>(null)
 
   const [authPassword, setAuthPassword] = useState("")
@@ -37,20 +42,27 @@ export const LoginScreen: FC<LoginScreenProps> = () => {
 
   const error = isSubmitted ? validationError : ""
 
-  function login() {
+  async function login() {
     setIsSubmitted(true)
     setAttemptsCount(attemptsCount + 1)
 
     if (validationError) return
 
-    // Make a request to your server to get an authentication token.
-    // If successful, reset the fields and set the token.
-    setIsSubmitted(false)
-    setAuthPassword("")
-    setAuthEmail("")
+    const result = await api.login({ email: authEmail ?? "", password: authPassword })
 
-    // We'll mock this with a fake token.
-    setAuthToken(String(Date.now()))
+    if (result.kind === "ok") {
+      setIsSubmitted(false)
+      setAuthPassword("")
+      setAuthEmail("")
+      await saveAuthToken(result.token as string)
+      setAuthToken(result.token as string)
+    } else {
+      // Display API error
+      // For simplicity we'll reuse validationError prop to show API issues
+      // but we could add separate state.
+      // eslint-disable-next-line no-console
+      console.warn("Login failed", result)
+    }
   }
 
   const PasswordRightAccessory: ComponentType<TextFieldAccessoryProps> = useMemo(
@@ -118,6 +130,15 @@ export const LoginScreen: FC<LoginScreenProps> = () => {
         preset="reversed"
         onPress={login}
       />
+
+      <Pressable onPress={() => navigation?.navigate?.("Signup")}>
+        <Text
+          text="Don't have an account? Sign up"
+          size="sm"
+          weight="medium"
+          style={themed($hint)}
+        />
+      </Pressable>
     </Screen>
   )
 }

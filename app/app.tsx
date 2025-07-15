@@ -18,20 +18,24 @@ if (__DEV__) {
 }
 import "./utils/gestureHandler"
 
-import { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { useFonts } from "expo-font"
 import * as Linking from "expo-linking"
 import { KeyboardProvider } from "react-native-keyboard-controller"
 import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context"
 
-import { AuthProvider } from "./context/AuthContext"
+import { AuthProvider, useAuth } from "./context/AuthContext"
 import { initI18n } from "./i18n"
 import { AppNavigator } from "./navigators/AppNavigator"
+import { OnboardingScreen } from "./screens/OnboardingScreen"
+import { LoginScreen } from "./screens/LoginScreen"
+import { SplashScreen } from "./screens/SplashScreen"
 import { useNavigationPersistence } from "./navigators/navigationUtilities"
 import { ThemeProvider } from "./theme/context"
 import { customFontsToLoad } from "./theme/typography"
 import { loadDateFnsLocale } from "./utils/formatDate"
 import * as storage from "./utils/storage"
+import { getAuthToken, hasOnboarded } from "./utils/persistence"
 
 export const NAVIGATION_PERSISTENCE_KEY = "NAVIGATION_STATE"
 
@@ -54,6 +58,48 @@ const config = {
       },
     },
   },
+}
+
+// ----- Inner component handling bootstrap ---------
+
+function RootNavigatorWrapper({
+  initialNavigationState,
+  onNavigationStateChange,
+}: {
+  initialNavigationState: any
+  onNavigationStateChange: (state: any | undefined) => void
+}) {
+  const [bootState, setBootState] = useState<"loading" | "onboarding" | "auth" | "app">(
+    "loading",
+  )
+
+  const { setAuthToken } = useAuth()
+
+  useEffect(() => {
+    async function bootstrap() {
+      const [token, onboardFlag] = await Promise.all([getAuthToken(), hasOnboarded()])
+
+      if (!onboardFlag) setBootState("onboarding")
+      else if (token) {
+        setAuthToken(token)
+        setBootState("app")
+      } else setBootState("auth")
+    }
+
+    bootstrap()
+  }, [setAuthToken])
+
+  if (bootState === "loading") return <SplashScreen />
+  if (bootState === "onboarding") return <OnboardingScreen />
+  if (bootState === "auth") return <LoginScreen />
+
+  return (
+    <AppNavigator
+      linking={{ prefixes: [prefix], config }}
+      initialState={initialNavigationState}
+      onStateChange={onNavigationStateChange}
+    />
+  )
 }
 
 /**
@@ -87,21 +133,14 @@ export function App() {
     return null
   }
 
-  const linking = {
-    prefixes: [prefix],
-    config,
-  }
-
-  // otherwise, we're ready to render the app
   return (
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
       <KeyboardProvider>
         <AuthProvider>
           <ThemeProvider>
-            <AppNavigator
-              linking={linking}
-              initialState={initialNavigationState}
-              onStateChange={onNavigationStateChange}
+            <RootNavigatorWrapper
+              initialNavigationState={initialNavigationState}
+              onNavigationStateChange={onNavigationStateChange}
             />
           </ThemeProvider>
         </AuthProvider>

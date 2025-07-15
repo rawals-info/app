@@ -9,25 +9,36 @@ const palette = {
   neutral800: "#191015",
   neutral900: "#000000",
 
-  primary100: "#F4E0D9",
-  primary200: "#E8C1B4",
-  primary300: "#DDA28E",
-  primary400: "#D28468",
-  primary500: "#C76542",
-  primary600: "#A54F31",
+  // Brand Primary (Purple)
+  primary100: "#F5E6FB",
+  primary200: "#E7C0F6",
+  primary300: "#D299F0",
+  primary400: "#BD73EA",
+  primary500: "#B620E0",
+  primary600: "#8B16AC",
 
+  // Secondary (keep existing slate)
   secondary100: "#DCDDE9",
   secondary200: "#BCC0D6",
   secondary300: "#9196B9",
   secondary400: "#626894",
   secondary500: "#41476E",
 
-  accent100: "#FFEED4",
-  accent200: "#FFE1B2",
-  accent300: "#FDD495",
-  accent400: "#FBC878",
-  accent500: "#FFBB50",
+  // Accent (Pink-ish)
+  accent100: "#FFD4DA",
+  accent200: "#FFB1BD",
+  accent300: "#FF8FA1",
+  accent400: "#FF7087",
+  accent500: "#FF4D6D",
 
+  // Success & Warning
+  success100: "#E0F2EA",
+  success500: "#3CB371",
+
+  warning100: "#FFF4D2",
+  warning500: "#FFA500",
+
+  // Error / Angry (unchanged)
   angry100: "#F2D6CD",
   angry500: "#C03403",
 
@@ -82,4 +93,9 @@ export const colors = {
    * Error Background.
    */
   errorBackground: palette.angry100,
+  // 👉 NEW semantic colours
+  success: palette.success500,
+  successBackground: palette.success100,
+  warning: palette.warning500,
+  warningBackground: palette.warning100,
 } as const

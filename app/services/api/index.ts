@@ -76,6 +76,59 @@ export class Api {
       return { kind: "bad-data" }
     }
   }
+
+  /**
+   * Log the user in and return a JWT token & user data
+   */
+  async login({ email, password }: { email: string; password: string }) {
+    const response: ApiResponse<any> = await this.apisauce.post("/api/auth/login", {
+      email,
+      password,
+    })
+
+    if (!response.ok) {
+      const problem = getGeneralApiProblem(response)
+      if (problem) return problem
+    }
+
+    try {
+      const data = response.data as any
+      return { kind: "ok" as const, token: data.data.token, user: data.data.user }
+    } catch (e) {
+      if (__DEV__ && e instanceof Error) {
+        console.error(`Bad data: ${e.message}\n${response.data}`, e.stack)
+      }
+      return { kind: "bad-data" as const }
+    }
+  }
+
+  /**
+   * Register a new user
+   */
+  async signup(payload: {
+    firstName: string
+    lastName: string
+    email: string
+    password: string
+    phoneNumber?: string
+  }) {
+    const response: ApiResponse<any> = await this.apisauce.post("/api/auth/register", payload)
+
+    if (!response.ok) {
+      const problem = getGeneralApiProblem(response)
+      if (problem) return problem
+    }
+
+    try {
+      const data = response.data as any
+      return { kind: "ok" as const, token: data.data.token, user: data.data.user }
+    } catch (e) {
+      if (__DEV__ && e instanceof Error) {
+        console.error(`Bad data: ${e.message}\n${response.data}`, e.stack)
+      }
+      return { kind: "bad-data" as const }
+    }
+  }
 }
 
 // Singleton instance of the API for convenience

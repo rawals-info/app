@@ -3,29 +3,26 @@
 
 import { Platform } from "react-native"
 import {
-  SpaceGrotesk_300Light as spaceGroteskLight,
-  SpaceGrotesk_400Regular as spaceGroteskRegular,
-  SpaceGrotesk_500Medium as spaceGroteskMedium,
-  SpaceGrotesk_600SemiBold as spaceGroteskSemiBold,
-  SpaceGrotesk_700Bold as spaceGroteskBold,
-} from "@expo-google-fonts/space-grotesk"
+  NunitoSans_300Light as nunitoLight,
+  NunitoSans_400Regular as nunitoRegular,
+  NunitoSans_600SemiBold as nunitoSemiBold,
+  NunitoSans_700Bold as nunitoBold,
+} from "@expo-google-fonts/nunito-sans"
 
 export const customFontsToLoad = {
-  spaceGroteskLight,
-  spaceGroteskRegular,
-  spaceGroteskMedium,
-  spaceGroteskSemiBold,
-  spaceGroteskBold,
+  nunitoLight,
+  nunitoRegular,
+  nunitoSemiBold,
+  nunitoBold,
 }
 
 const fonts = {
-  spaceGrotesk: {
-    // Cross-platform Google font.
-    light: "spaceGroteskLight",
-    normal: "spaceGroteskRegular",
-    medium: "spaceGroteskMedium",
-    semiBold: "spaceGroteskSemiBold",
-    bold: "spaceGroteskBold",
+  nunitoSans: {
+    light: "nunitoLight",
+    normal: "nunitoRegular",
+    medium: "nunitoRegular",
+    semiBold: "nunitoSemiBold",
+    bold: "nunitoBold",
   },
   helveticaNeue: {
     // iOS only font.
@@ -59,7 +56,7 @@ export const typography = {
   /**
    * The primary font. Used in most places.
    */
-  primary: fonts.spaceGrotesk,
+  primary: fonts.nunitoSans,
   /**
    * An alternate font used for perhaps titles and stuff.
    */

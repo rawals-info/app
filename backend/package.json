@@ -1,17 +1,27 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "DiabetesBuddy backend API",
+  "main": "dist/server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "db:migrate": "ts-node scripts/migrate.ts",
+    "db:migrate:undo": "ts-node scripts/migrate.ts --undo",
+    "db:reset": "ts-node scripts/migrate.ts --reset --force",
+    "db:seed": "ts-node scripts/migrate.ts --seed",
+    "check:env": "ts-node check-env.ts",
+    "debug:conn": "ts-node debug-conn.ts",
+    "test:db": "ts-node test-db.ts",
+    "direct:server": "ts-node direct-server.ts",
+    "direct:test": "ts-node direct-test.ts",
+    "start:server": "ts-node run-server.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
@@ -20,9 +30,21 @@
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.11.3",
     "pg-hstore": "^2.3.4",
-    "sequelize": "^6.35.1"
+    "sequelize": "^6.35.1",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "@types/bcrypt": "^5.0.2",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^20.10.4",
+    "@types/sequelize": "^4.28.19",
+    "@types/uuid": "^9.0.7",
+    "nodemon": "^3.0.2",
+    "sequelize-cli": "^6.6.2",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.3"
   }
 }

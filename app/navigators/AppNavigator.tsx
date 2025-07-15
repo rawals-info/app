@@ -4,7 +4,8 @@
  * Generally speaking, it will contain an auth flow (registration, login, forgot password)
  * and a "main" flow which the user will use once logged in.
  */
-import { ComponentProps } from "react"
+import React, { ComponentProps } from "react"
+import { storage } from "@/utils/storage"
 import { NavigationContainer, NavigatorScreenParams } from "@react-navigation/native"
 import { createNativeStackNavigator, NativeStackScreenProps } from "@react-navigation/native-stack"
 
@@ -12,6 +13,8 @@ import Config from "@/config"
 import { useAuth } from "@/context/AuthContext"
 import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
 import { LoginScreen } from "@/screens/LoginScreen"
+import { SignupScreen } from "@/screens/SignupScreen"
+import { OnboardingScreen } from "@/screens/OnboardingScreen"
 import { WelcomeScreen } from "@/screens/WelcomeScreen"
 import { useAppTheme } from "@/theme/context"
 
@@ -30,6 +33,8 @@ import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
 export type AppStackParamList = {
   Welcome: undefined
   Login: undefined
+  Onboarding: undefined
+  Signup: undefined
   Demo: NavigatorScreenParams<DemoTabParamList>
   // 🔥 Your screens go here
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
@@ -51,6 +56,7 @@ const Stack = createNativeStackNavigator<AppStackParamList>()
 
 const AppStack = () => {
   const { isAuthenticated } = useAuth()
+  const hasSeenOnboarding = !!storage.getString("onboarding.completed")
 
   const {
     theme: { colors },
@@ -65,7 +71,7 @@ const AppStack = () => {
           backgroundColor: colors.background,
         },
       }}
-      initialRouteName={isAuthenticated ? "Welcome" : "Login"}
+      initialRouteName={isAuthenticated ? "Welcome" : hasSeenOnboarding ? "Login" : "Onboarding"}
     >
       {isAuthenticated ? (
         <>
@@ -75,7 +81,9 @@ const AppStack = () => {
         </>
       ) : (
         <>
+          {!hasSeenOnboarding && <Stack.Screen name="Onboarding" component={OnboardingScreen} />}
           <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Signup" component={SignupScreen} />
         </>
       )}
 

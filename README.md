@@ -1,77 +1,147 @@
-# Welcome to your new ignited app!
+# DiabetesBuddy
 
-> The latest and greatest boilerplate for Infinite Red opinions
+DiabetesBuddy is a comprehensive mobile application designed to help diabetic patients effectively manage their condition through blood sugar tracking, diet monitoring, exercise tracking, and personalized AI recommendations.
 
-This is the boilerplate that [Infinite Red](https://infinite.red) uses as a way to test bleeding-edge changes to our React Native stack.
+<p align="center">
+  <img src="docs/logo_placeholder.png" alt="DiabetesBuddy Logo" width="200"/>
+</p>
 
-- [Quick start documentation](https://github.com/infinitered/ignite/blob/master/docs/boilerplate/Boilerplate.md)
-- [Full documentation](https://github.com/infinitered/ignite/blob/master/docs/README.md)
+## Overview
+
+DiabetesBuddy empowers diabetic patients to take control of their health by:
+
+- **Tracking blood sugar levels** manually or through connected devices
+- **Logging meals** with AI analysis of nutritional content
+- **Recording exercise activities** and their impact on blood sugar
+- **Receiving personalized recommendations** based on data patterns
+- **Setting alerts and reminders** for testing, medication, and activities
+
+## Tech Stack
+
+### Mobile App (React Native)
+- **Framework**: React Native with Ignite boilerplate
+- **State Management**: Redux/MobX
+- **UI Components**: React Native Paper
+- **Navigation**: React Navigation
+
+### Backend (Node.js)
+- **API**: Express.js
+- **Database**: PostgreSQL
+- **ORM**: Sequelize
+- **Authentication**: JWT
+
+### AI Features
+- Food analysis with nutritional recommendations
+- Exercise impact assessment and suggestions
+- Blood sugar pattern detection
+- Personalized health insights
+
+## Features
+
+### Blood Sugar Management
+- Log readings with context (before/after meals, fasting, etc.)
+- Visualize trends with interactive charts
+- Set custom target ranges
+- Receive alerts for out-of-range values
+
+### Food Tracking
+- Log meals with photos
+- AI-powered nutritional analysis
+- Carbohydrate counting assistance
+- Meal impact on blood sugar
+
+### Exercise Monitoring
+- Track various physical activities
+- Record duration, intensity, and effort
+- Observe exercise impact on blood glucose
+- Receive activity recommendations
+
+### Smart Recommendations
+- Personalized diet suggestions
+- Exercise recommendations based on blood sugar patterns
+- Lifestyle adjustment tips
+- Progress reports and insights
+
+## Project Structure
+
+```
+DiabetesBuddy/
+├── backend/             # Node.js Express backend
+│   ├── src/
+│   │   ├── config/      # Configuration files
+│   │   ├── controllers/ # API controllers
+│   │   ├── models/      # Database models
+│   │   ├── routes/      # API routes
+│   │   ├── middleware/  # Custom middleware
+│   │   └── utils/       # Utility functions
+│   └── README.md        # Backend documentation
+│
+└── mobile/              # React Native mobile app
+    ├── app/
+    │   ├── components/  # Reusable UI components
+    │   ├── screens/     # App screens
+    │   ├── navigation/  # Navigation configuration
+    │   ├── services/    # API services
+    │   └── theme/       # Styling and theme
+    └── README.md        # Mobile app documentation
+```
 
 ## Getting Started
 
-```bash
-npm install
-npm run start
-```
+### Prerequisites
 
-To make things work on your local simulator, or on your phone, you need first to [run `eas build`](https://github.com/infinitered/ignite/blob/master/docs/expo/EAS.md). We have many shortcuts on `package.json` to make it easier:
+- Node.js (v14+)
+- PostgreSQL (v12+)
+- React Native development environment
 
-```bash
-npm run build:ios:sim # build for ios simulator
-npm run build:ios:dev # build for ios device
-npm run build:ios:prod # build for ios device
-```
+### Backend Setup
 
-### `./assets` directory
+1. Navigate to the backend directory:
+   ```
+   cd backend
+   ```
 
-This directory is designed to organize and store various assets, making it easy for you to manage and use them in your application. The assets are further categorized into subdirectories, including `icons` and `images`:
+2. Install dependencies:
+   ```
+   npm install
+   ```
 
-```tree
-assets
-├── icons
-└── images
-```
+3. Set up environment variables (copy .env.sample to .env)
 
-**icons**
-This is where your icon assets will live. These icons can be used for buttons, navigation elements, or any other UI components. The recommended format for icons is PNG, but other formats can be used as well.
+4. Start the development server:
+   ```
+   npm run dev
+   ```
 
-Ignite comes with a built-in `Icon` component. You can find detailed usage instructions in the [docs](https://github.com/infinitered/ignite/blob/master/docs/boilerplate/app/components/Icon.md).
+### Mobile App Setup
 
-**images**
-This is where your images will live, such as background images, logos, or any other graphics. You can use various formats such as PNG, JPEG, or GIF for your images.
+1. Navigate to the mobile directory:
+   ```
+   cd mobile
+   ```
 
-Another valuable built-in component within Ignite is the `AutoImage` component. You can find detailed usage instructions in the [docs](https://github.com/infinitered/ignite/blob/master/docs/Components-AutoImage.md).
+2. Install dependencies:
+   ```
+   npm install
+   ```
 
-How to use your `icon` or `image` assets:
+3. Start the Metro bundler:
+   ```
+   npm start
+   ```
 
-```typescript
-import { Image } from 'react-native';
+4. Run on Android or iOS:
+   ```
+   npm run android
+   # or
+   npm run ios
+   ```
 
-const MyComponent = () => {
-  return (
-    <Image source={require('assets/images/my_image.png')} />
-  );
-};
-```
+## License
 
-## Running Maestro end-to-end tests
+This project is licensed under the MIT License.
 
-Follow our [Maestro Setup](https://ignitecookbook.com/docs/recipes/MaestroSetup) recipe.
+## Contributors
 
-## Next Steps
-
-### Ignite Cookbook
-
-[Ignite Cookbook](https://ignitecookbook.com/) is an easy way for developers to browse and share code snippets (or “recipes”) that actually work.
-
-### Upgrade Ignite boilerplate
-
-Read our [Upgrade Guide](https://ignitecookbook.com/docs/recipes/UpdatingIgnite) to learn how to upgrade your Ignite project.
-
-## Community
-
-⭐️ Help us out by [starring on GitHub](https://github.com/infinitered/ignite), filing bug reports in [issues](https://github.com/infinitered/ignite/issues) or [ask questions](https://github.com/infinitered/ignite/discussions).
-
-💬 Join us on [Slack](https://join.slack.com/t/infiniteredcommunity/shared_invite/zt-1f137np4h-zPTq_CbaRFUOR_glUFs2UA) to discuss.
-
-📰 Make our Editor-in-chief happy by [reading the React Native Newsletter](https://reactnativenewsletter.com/).
+- [Your Name](https://github.com/yourusername)
+- [Friend's Name](https://github.com/friendusername)

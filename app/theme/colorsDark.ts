@@ -9,24 +9,34 @@ const palette = {
   neutral200: "#191015",
   neutral100: "#000000",
 
-  primary600: "#F4E0D9",
-  primary500: "#E8C1B4",
-  primary400: "#DDA28E",
-  primary300: "#D28468",
-  primary200: "#C76542",
-  primary100: "#A54F31",
+  // Brand Primary inverted (dark mode lighter tints)
+  primary600: "#F5E6FB",
+  primary500: "#E7C0F6",
+  primary400: "#D299F0",
+  primary300: "#BD73EA",
+  primary200: "#B620E0",
+  primary100: "#8B16AC",
 
+  // Secondary (keep existing slate but inverted order)
   secondary500: "#DCDDE9",
   secondary400: "#BCC0D6",
   secondary300: "#9196B9",
   secondary200: "#626894",
   secondary100: "#41476E",
 
-  accent500: "#FFEED4",
-  accent400: "#FFE1B2",
-  accent300: "#FDD495",
-  accent200: "#FBC878",
-  accent100: "#FFBB50",
+  // Accent inverted
+  accent500: "#FFD4DA",
+  accent400: "#FFB1BD",
+  accent300: "#FF8FA1",
+  accent200: "#FF7087",
+  accent100: "#FF4D6D",
+
+  // Success & Warning
+  success100: "#3CB371",
+  success500: "#E0F2EA",
+
+  warning100: "#FFA500",
+  warning500: "#FFF4D2",
 
   angry100: "#F2D6CD",
   angry500: "#C03403",
@@ -47,4 +57,9 @@ export const colors = {
   separator: palette.neutral300,
   error: palette.angry500,
   errorBackground: palette.angry100,
+  // 👉 NEW semantic colours
+  success: palette.success100,
+  successBackground: palette.success500,
+  warning: palette.warning100,
+  warningBackground: palette.warning500,
 } as const
