@@ -1,5 +1,5 @@
 import express from 'express';
-import onboardingController from '../controllers/onboardingController';
+import onboardingController, { setGoal } from '../controllers/onboardingController';
 import { authenticate } from '../middleware/auth';
 
 const router = express.Router();
@@ -15,5 +15,8 @@ router.put('/progress', onboardingController.updateOnboardingProgress);
 
 // Complete onboarding
 router.post('/complete', onboardingController.completeOnboarding);
+
+// Set user goal
+router.post('/goal', setGoal);
 
 export default router; 

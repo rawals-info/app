@@ -7,6 +7,7 @@ import BloodSugarReading from './BloodSugarReading';
 import Exercise from './Exercise';
 import FoodLog from './FoodLog';
 import Recommendation from './Recommendation';
+import UserGoal from './UserGoal';
 import AdminAuth from './AdminAuth';
 import AdminProfile from './AdminProfile';
 
@@ -21,6 +22,7 @@ export {
   Exercise,
   FoodLog,
   Recommendation,
+  UserGoal,
   AdminAuth,
   AdminProfile
 };
@@ -36,6 +38,7 @@ export default {
   Exercise,
   FoodLog,
   Recommendation,
+  UserGoal,
   AdminAuth,
   AdminProfile
 }; 

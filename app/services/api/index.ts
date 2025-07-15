@@ -129,6 +129,15 @@ export class Api {
       return { kind: "bad-data" as const }
     }
   }
+
+  async setGoal(goal: 'prevent' | 'monitor' | 'diagnosed') {
+    const resp: ApiResponse<any> = await this.apisauce.post('/api/onboarding/goal', { goal })
+    if (!resp.ok) {
+      const problem = getGeneralApiProblem(resp)
+      if (problem) return problem
+    }
+    return { kind: 'ok' as const }
+  }
 }
 
 // Singleton instance of the API for convenience

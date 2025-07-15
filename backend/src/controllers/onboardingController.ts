@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { AuthRequest } from '../types';
-import { OnboardingProgress, UserProfile, HealthProfile } from '../models';
+import { OnboardingProgress, UserProfile, HealthProfile, UserGoal } from '../models';
 import { sequelize } from '../config/database';
 
 /**
@@ -206,6 +206,31 @@ export const completeOnboarding = async (req: AuthRequest, res: Response) => {
     });
   }
 };
+
+/**
+ * Set user's main goal (prevent / monitor / diagnosed)
+ */
+export const setGoal = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id
+    const { goal } = req.body as { goal: 'prevent' | 'monitor' | 'diagnosed' }
+
+    if (!userId || !goal) {
+      return res.status(400).json({ success: false, message: 'goal required' })
+    }
+
+    // find profile
+    const userProfile = await UserProfile.findOne({ where: { authId: userId } })
+    if (!userProfile) return res.status(404).json({ success: false, message: 'User not found' })
+
+    await UserGoal.upsert({ userId: userProfile.id, goal })
+
+    return res.json({ success: true })
+  } catch (e) {
+    console.error('Set goal error', e)
+    return res.status(500).json({ success: false, message: 'Failed to set goal' })
+  }
+}
 
 export default {
   getOnboardingStatus,

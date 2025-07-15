@@ -23,6 +23,8 @@ import { useFonts } from "expo-font"
 import * as Linking from "expo-linking"
 import { KeyboardProvider } from "react-native-keyboard-controller"
 import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context"
+import { NavigationContainer } from "@react-navigation/native"
+import { createNativeStackNavigator } from "@react-navigation/native-stack"
 
 import { AuthProvider, useAuth } from "./context/AuthContext"
 import { initI18n } from "./i18n"
@@ -36,6 +38,7 @@ import { customFontsToLoad } from "./theme/typography"
 import { loadDateFnsLocale } from "./utils/formatDate"
 import * as storage from "./utils/storage"
 import { getAuthToken, hasOnboarded } from "./utils/persistence"
+import { OnboardingGoalScreen } from './screens/OnboardingGoalScreen'
 
 export const NAVIGATION_PERSISTENCE_KEY = "NAVIGATION_STATE"
 
@@ -89,9 +92,33 @@ function RootNavigatorWrapper({
     bootstrap()
   }, [setAuthToken])
 
+  const Stack = createNativeStackNavigator()
+
+  function WrapSingle(Component: React.ComponentType) {
+    return (
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Screen" component={Component as any} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    )
+  }
+
+  function OnboardingNav() {
+    return (
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Onboarding">
+          <Stack.Screen name="Onboarding" component={OnboardingScreen as any} />
+          <Stack.Screen name="OnboardingGoal" component={OnboardingGoalScreen as any} />
+          <Stack.Screen name="Login" component={LoginScreen as any} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    )
+  }
+
   if (bootState === "loading") return <SplashScreen />
-  if (bootState === "onboarding") return <OnboardingScreen />
-  if (bootState === "auth") return <LoginScreen />
+  if (bootState === "onboarding") return <OnboardingNav />
+  if (bootState === "auth") return WrapSingle(LoginScreen)
 
   return (
     <AppNavigator

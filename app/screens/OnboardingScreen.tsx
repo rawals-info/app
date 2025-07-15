@@ -48,72 +48,97 @@ interface OnboardingScreenProps {
 
 export const OnboardingScreen: FC<OnboardingScreenProps> = ({ navigation }) => {
   const flatListRef = useRef<FlatList>(null)
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
   const { themed } = useAppTheme()
   const [index, setIndex] = useState(0)
 
   // Auto-scroll every 4s
   useEffect(() => {
-    const timer = setInterval(() => {
+    timerRef.current = setInterval(() => {
       setIndex((prev) => {
         const next = prev === CARDS.length - 1 ? 0 : prev + 1
         flatListRef.current?.scrollToIndex({ index: next, animated: true })
         return next
       })
     }, 4000)
-    return () => clearInterval(timer)
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
   }, [])
+
+  function stopAutoScroll() {
+    if (timerRef.current) {
+      clearInterval(timerRef.current)
+      timerRef.current = null
+    }
+  }
 
   async function finish() {
     await setHasOnboarded()
-    navigation?.replace?.("Login")
+    navigation?.replace?.("OnboardingGoal")
+  }
+
+  function handleNext() {
+    stopAutoScroll()
+    if (index < CARDS.length - 1) {
+      const next = index + 1
+      flatListRef.current?.scrollToIndex({ index: next, animated: true })
+      setIndex(next)
+    } else {
+      navigation?.replace?.("OnboardingGoal")
+    }
   }
 
   return (
     <Screen preset="fixed" safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
-      {/* --- Onboarding Slides --- */}
-      <FlatList
-        ref={flatListRef}
-        data={CARDS}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={[{ width }, $slideContainer]}>
-            <View style={themed($card)}>
-              <Pressable style={themed($skipInCard)} onPress={finish} hitSlop={10}>
-                <Text text="Skip" weight="medium" />
-              </Pressable>
+      <View style={{ flex: 1 }} onTouchStart={stopAutoScroll}>
+        {/* --- Onboarding Slides --- */}
+        <FlatList
+          ref={flatListRef}
+          data={CARDS}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View style={[{ width }, $slideContainer]}>
+              <View style={themed($card)}>
+                <Pressable style={themed($skipInCard)} onPress={finish} hitSlop={10}>
+                  <Text text="Skip" weight="medium" />
+                </Pressable>
 
-              <Text preset="heading" text={item.title} style={themed($title)} />
-              <Text size="lg" text={item.body} style={themed($body)} />
+                <Text preset="heading" text={item.title} style={themed($title)} />
+                <Text size="lg" text={item.body} style={themed($body)} />
 
-              {/* placeholder illustration */}
-              <Image
-                source={require("@assets/placeholder/onboarding-people.png")}
-                style={$illustration}
-                resizeMode="contain"
-              />
+                {/* placeholder illustration */}
+                <Image
+                  source={require("@assets/placeholder/onboarding-people.png")}
+                  style={$illustration}
+                  resizeMode="contain"
+                />
 
-              {/* Dots inside card */}
-              <View style={$dotsContainerInCard}>
-                {CARDS.map((_, i) => (
-                  <View key={i} style={[themed($dot), i === index && themed($dotActive)]} />
-                ))}
+                {/* Dots inside card */}
+                <View style={$dotsContainerInCard}>
+                  {CARDS.map((_, i) => (
+                    <View key={i} style={[themed($dot), i === index && themed($dotActive)]} />
+                  ))}
+                </View>
               </View>
             </View>
-          </View>
-        )}
-        onMomentumScrollEnd={(ev) => {
-          const newIndex = Math.round(ev.nativeEvent.contentOffset.x / width)
-          setIndex(newIndex)
-        }}
-      />
+          )}
+          onScrollBeginDrag={stopAutoScroll}
+          onMomentumScrollEnd={(ev) => {
+            const newIndex = Math.round(ev.nativeEvent.contentOffset.x / width)
+            setIndex(newIndex)
+          }}
+        />
 
-      {/* Floating CTA */}
-      <Pressable style={themed($cta)} onPress={finish}>
-        <Text text={index === CARDS.length - 1 ? "Get Started" : "Next"} weight="medium" />
-      </Pressable>
+        {/* Floating CTA */}
+        <Pressable style={themed($cta)} onPress={handleNext}>
+          <Text text={index === CARDS.length - 1 ? "Get Started" : "Next"} weight="medium" />
+        </Pressable>
+      </View>
     </Screen>
   )
 }
