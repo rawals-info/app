@@ -2,6 +2,9 @@ import { Response } from 'express';
 import { Op } from 'sequelize';
 import { Recommendation } from '../models';
 import { AuthRequest } from '../types';
+import { RecommendationRule, RecommendationResult, QuestionCategory } from '../models';
+import { sequelize } from '../config/database';
+import UserProfile from '../models/UserProfile';
 
 // Get all recommendations for a user with optional filters
 export const getRecommendations = async (req: AuthRequest, res: Response): Promise<Response> => {
@@ -405,6 +408,48 @@ export const deleteRecommendation = async (req: AuthRequest, res: Response): Pro
   }
 };
 
+function matchConditions(ruleCond: any, answers: Record<string,string>) {
+  for (const [key, val] of Object.entries(ruleCond)) {
+    if ((answers as any)[key] !== val) return false;
+  }
+  return true;
+}
+
+export const getSummary = async (req: AuthRequest, res: Response) => {
+  const transaction = await sequelize.transaction();
+  try {
+    const { answers, goal } = req.body as { answers: Array<{ questionId: string; answerValue: string }>; goal: string };
+    if (!answers || !goal) {
+      await transaction.rollback();
+      return res.status(400).json({ success:false, message:'answers and goal required'});
+    }
+    const categorySlug = goal === 'prevent' ? 'non_patient' : goal === 'monitor' ? 'at_risk' : 'patient';
+    const rules = await RecommendationRule.findAll({ where:{ categorySlug } });
+    // transform answers to key map (assume questionId or question key mapping already matches)
+    const answerMap: Record<string,string> = {};
+    answers.forEach(a=>{ answerMap[a.questionId] = a.answerValue; });
+    let matchedRule = rules.find(r=> matchConditions(r.conditions as any, answerMap));
+    if (!matchedRule) matchedRule = rules[0]; // fallback
+
+    if (req.user) {
+      const userProfile = await UserProfile.findOne({ where:{ authId: req.user.id } });
+      if (userProfile) {
+        await RecommendationResult.create({
+          userId: userProfile.id,
+          ruleId: matchedRule.id,
+          questionnaireSnapshot: answerMap
+        }, { transaction });
+      }
+    }
+    await transaction.commit();
+    return res.json({ success:true, data:{ title: matchedRule.title, summary: matchedRule.summary } });
+  } catch(e:any) {
+    await transaction.rollback();
+    console.error('summary error',e);
+    return res.status(500).json({ success:false, message:'failed', error:e.message });
+  }
+};
+
 export default {
   getRecommendations,
   getRecommendationById,
@@ -413,5 +458,6 @@ export default {
   recordAction,
   markAllAsRead,
   createRecommendation,
-  deleteRecommendation
+  deleteRecommendation,
+  getSummary
 }; 

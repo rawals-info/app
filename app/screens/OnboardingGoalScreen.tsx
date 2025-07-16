@@ -71,8 +71,9 @@ export const OnboardingGoalScreen: FC<{ navigation?: any }> = ({ navigation }) =
     } else {
       await AsyncStorage.setItem('pendingGoal', selectedGoal)
     }
-    await setHasOnboarded()
-    navigation?.replace?.('Login')
+    
+    // Navigate to questionnaire screen instead of Login
+    navigation?.navigate?.('Questionnaire', { goal: selectedGoal })
   }
 
   return (

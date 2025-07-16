@@ -21,6 +21,7 @@ import bloodSugarRoutes from './routes/bloodSugarRoutes';
 import foodLogRoutes from './routes/foodLogRoutes';
 import exerciseRoutes from './routes/exerciseRoutes';
 import recommendationRoutes from './routes/recommendationRoutes';
+import questionnaireRoutes from './routes/questionnaireRoutes';
 
 // Initialize express app
 const app = express();
@@ -45,6 +46,7 @@ app.use('/api/blood-sugar', bloodSugarRoutes);
 app.use('/api/food-logs', foodLogRoutes);
 app.use('/api/exercises', exerciseRoutes);
 app.use('/api/recommendations', recommendationRoutes);
+app.use('/api/questionnaire', questionnaireRoutes);
 
 // Admin Routes (separate portal)
 app.use('/api/admin/auth', adminAuthRoutes);

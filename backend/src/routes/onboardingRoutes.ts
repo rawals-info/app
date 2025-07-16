@@ -19,4 +19,7 @@ router.post('/complete', onboardingController.completeOnboarding);
 // Set user goal
 router.post('/goal', setGoal);
 
+router.post('/summary', onboardingController.completeOnboarding);
+// placeholder
+
 export default router; 

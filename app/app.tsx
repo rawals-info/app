@@ -39,6 +39,9 @@ import { loadDateFnsLocale } from "./utils/formatDate"
 import * as storage from "./utils/storage"
 import { getAuthToken, hasOnboarded } from "./utils/persistence"
 import { OnboardingGoalScreen } from './screens/OnboardingGoalScreen'
+import { QuestionnaireScreen } from "./screens/QuestionnaireScreen"
+import { SummaryScreen } from "./screens/SummaryScreen"
+import { SignupScreen } from "./screens/SignupScreen"
 
 export const NAVIGATION_PERSISTENCE_KEY = "NAVIGATION_STATE"
 
@@ -110,7 +113,10 @@ function RootNavigatorWrapper({
         <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Onboarding">
           <Stack.Screen name="Onboarding" component={OnboardingScreen as any} />
           <Stack.Screen name="OnboardingGoal" component={OnboardingGoalScreen as any} />
+          <Stack.Screen name="Questionnaire" component={QuestionnaireScreen as any} />
+          <Stack.Screen name="Summary" component={SummaryScreen as any} />
           <Stack.Screen name="Login" component={LoginScreen as any} />
+          <Stack.Screen name="Signup" component={SignupScreen as any} />
         </Stack.Navigator>
       </NavigationContainer>
     )

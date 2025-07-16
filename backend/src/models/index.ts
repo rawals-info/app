@@ -10,6 +10,11 @@ import Recommendation from './Recommendation';
 import UserGoal from './UserGoal';
 import AdminAuth from './AdminAuth';
 import AdminProfile from './AdminProfile';
+import QuestionCategory from './QuestionCategory';
+import Question from './Question';
+import QuestionAnswer from './QuestionAnswer';
+import RecommendationRule from './RecommendationRule';
+import RecommendationResult from './RecommendationResult';
 
 // Re-export all models
 export {
@@ -24,7 +29,12 @@ export {
   Recommendation,
   UserGoal,
   AdminAuth,
-  AdminProfile
+  AdminProfile,
+  QuestionCategory,
+  Question,
+  QuestionAnswer,
+  RecommendationRule,
+  RecommendationResult
 };
 
 // Default export
@@ -40,5 +50,10 @@ export default {
   Recommendation,
   UserGoal,
   AdminAuth,
-  AdminProfile
+  AdminProfile,
+  QuestionCategory,
+  Question,
+  QuestionAnswer,
+  RecommendationRule,
+  RecommendationResult
 }; 

@@ -138,6 +138,55 @@ export class Api {
     }
     return { kind: 'ok' as const }
   }
+
+  /**
+   * Fetch questionnaire questions by category
+   */
+  async getQuestions(category: string) {
+    const response: ApiResponse<any> = await this.apisauce.get(`/api/questionnaire/questions?category=${category}`)
+    
+    if (!response.ok) {
+      const problem = getGeneralApiProblem(response)
+      if (problem) return problem
+    }
+    
+    try {
+      const data = response.data
+      return { kind: 'ok' as const, data }
+    } catch (e) {
+      if (__DEV__ && e instanceof Error) {
+        console.error(`Bad data: ${e.message}\n${response.data}`, e.stack)
+      }
+      return { kind: 'bad-data' as const }
+    }
+  }
+
+  /**
+   * Submit questionnaire answers
+   */
+  async submitAnswers(answers: Array<{ questionId: string; answerValue: string }>) {
+    const response: ApiResponse<any> = await this.apisauce.post('/api/questionnaire/answers', { answers })
+    
+    if (!response.ok) {
+      const problem = getGeneralApiProblem(response)
+      if (problem) return problem
+    }
+    
+    return { kind: 'ok' as const }
+  }
+
+  /**
+   * Fetch personalised summary based on answers
+   */
+  async getSummary(payload: { goal: string; answers: Array<{ questionId: string; answerValue: string }> }) {
+    const response: ApiResponse<any> = await this.apisauce.post('/api/questionnaire/summary', payload)
+
+    if (!response.ok) {
+      const problem = getGeneralApiProblem(response)
+      if (problem) return problem
+    }
+    return { kind: 'ok' as const, data: response.data }
+  }
 }
 
 // Singleton instance of the API for convenience

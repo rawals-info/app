@@ -90,11 +90,12 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       }
     });
 
-    // Add index for efficient querying by date range
-    await queryInterface.addIndex('blood_sugar_readings', ['user_id', 'reading_datetime']);
-  },
+    // Add index for efficient querying by date range (idempotent)
+    await queryInterface.sequelize.query(
+      `CREATE INDEX IF NOT EXISTS blood_sugar_readings_user_id_reading_datetime ON blood_sugar_readings (user_id, reading_datetime);`
+    );
+  }
 
 export async function down(queryInterface: QueryInterface): Promise<void> {
     await queryInterface.dropTable('blood_sugar_readings');
-  }
-}; 
+} 

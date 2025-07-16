@@ -15,8 +15,11 @@ import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
 import { LoginScreen } from "@/screens/LoginScreen"
 import { SignupScreen } from "@/screens/SignupScreen"
 import { OnboardingScreen } from "@/screens/OnboardingScreen"
+import { OnboardingGoalScreen } from "@/screens/OnboardingGoalScreen"
+import { QuestionnaireScreen } from "@/screens/QuestionnaireScreen"
 import { WelcomeScreen } from "@/screens/WelcomeScreen"
 import { useAppTheme } from "@/theme/context"
+import { SummaryScreen } from "@/screens/SummaryScreen"
 
 import { DemoNavigator, DemoTabParamList } from "./DemoNavigator"
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
@@ -34,6 +37,9 @@ export type AppStackParamList = {
   Welcome: undefined
   Login: undefined
   Onboarding: undefined
+  OnboardingGoal: undefined
+  Questionnaire: { goal?: string }
+  Summary: { title: string; summary: string; goal: string }
   Signup: undefined
   Demo: NavigatorScreenParams<DemoTabParamList>
   // 🔥 Your screens go here
@@ -73,15 +79,19 @@ const AppStack = () => {
       }}
       initialRouteName={isAuthenticated ? "Welcome" : hasSeenOnboarding ? "Login" : "Onboarding"}
     >
+      {/* Common screens */}
+      <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+      <Stack.Screen name="OnboardingGoal" component={OnboardingGoalScreen} />
+      <Stack.Screen name="Questionnaire" component={QuestionnaireScreen} />
+      <Stack.Screen name="Summary" component={SummaryScreen} />
+
       {isAuthenticated ? (
         <>
           <Stack.Screen name="Welcome" component={WelcomeScreen} />
-
           <Stack.Screen name="Demo" component={DemoNavigator} />
         </>
       ) : (
         <>
-          {!hasSeenOnboarding && <Stack.Screen name="Onboarding" component={OnboardingScreen} />}
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Signup" component={SignupScreen} />
         </>
