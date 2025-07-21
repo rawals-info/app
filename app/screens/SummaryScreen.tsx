@@ -4,6 +4,9 @@ import { Screen } from '@/components/Screen'
 import { Text } from '@/components/Text'
 import { Button } from '@/components/Button'
 import { useAppTheme } from '@/theme/context'
+import { useAuth } from '@/context/AuthContext'
+import { api } from '@/services/api'
+import { shadowElevation } from '@/theme/styleHelpers'
 
 interface Props {
   navigation?: any
@@ -12,13 +15,29 @@ interface Props {
 
 export const SummaryScreen: FC<Props> = ({ navigation, route }) => {
   const { themed } = useAppTheme()
+  const { isAuthenticated, setIsOnboarded } = useAuth()
   const { title, summary } = route?.params || {}
 
-  const handleSignup = () => {
-    if (navigation?.navigate) {
-      navigation.navigate('Signup')
+  const handlePress = async () => {
+    if (isAuthenticated) {
+      // Ensure onboarding marked complete just in case
+      try {
+        await api.completeOnboarding()
+        setIsOnboarded(true)
+      } catch {}
+
+      if (navigation?.navigate) {
+        navigation.navigate('Main' as any)
+      } else {
+        navigation?.replace?.('Main' as any)
+      }
     } else {
-      navigation?.replace?.('Signup')
+      // Not signed in yet, go to signup
+      if (navigation?.navigate) {
+        navigation.navigate('Signup')
+      } else {
+        navigation?.replace?.('Signup')
+      }
     }
   }
 
@@ -30,7 +49,12 @@ export const SummaryScreen: FC<Props> = ({ navigation, route }) => {
           <Text preset="headline" text={title} style={themed($titleText)} />
           <Text preset="body" text={summary} style={$bodyText} />
         </View>
-        <Button text="Create Account" preset="primary" onPress={handleSignup} style={$button} />
+        <Button
+          text={isAuthenticated ? 'Explore the App' : 'Create Account'}
+          preset="primary"
+          onPress={handlePress}
+          style={$button}
+        />
       </Screen>
     </>
   )
@@ -48,20 +72,31 @@ const $container: ViewStyle = {
 const $content: ViewStyle = {
   flex: 1,
   justifyContent: 'center',
+  backgroundColor: 'rgba(42, 161, 153, 0.03)',
+  borderRadius: 24,
+  padding: 24,
+  ...shadowElevation(2),
 }
 
 const $titleText: TextStyle = {
   textAlign: 'center',
   marginBottom: 16,
+  color: '#2AA199',
+  fontSize: 26,
+  lineHeight: 34,
+  fontWeight: '600',
 }
 
 const $bodyText: TextStyle = {
   textAlign: 'center',
   fontSize: 16,
   lineHeight: 24,
-  color: '#333333',
+  color: '#666666',
 }
 
 const $button: ViewStyle = {
   height: 48,
+  backgroundColor: '#2AA199',
+  ...shadowElevation(3),
+  marginTop: 24,
 } 

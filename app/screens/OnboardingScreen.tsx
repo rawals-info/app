@@ -206,6 +206,19 @@ const $header: ViewStyle = {
   paddingBottom: 20,
 }
 
+const $skipButton: ViewStyle = {
+  alignSelf: 'flex-end',
+  backgroundColor: 'rgba(42, 161, 153, 0.1)',
+  paddingHorizontal: 16,
+  paddingVertical: 8,
+  borderRadius: 20,
+}
+
+const $skipText: TextStyle = {
+  color: '#2AA199',
+  fontSize: 16,
+}
+
 const $slideContainer: ViewStyle = {
   flex: 1,
   justifyContent: "center",
@@ -216,34 +229,38 @@ const $cardContent: ViewStyle = {
   flex: 1,
   width: '100%',
   paddingHorizontal: 32,
-  paddingVertical: 60, // Increased vertical padding
+  paddingVertical: 60,
   justifyContent: 'center',
-  alignItems: 'center', // Center content horizontally
+  alignItems: 'center',
 }
 
 const $contentContainer: ViewStyle = {
-  maxWidth: 500, // Limit width on larger screens
+  maxWidth: 500,
   width: '100%',
-  alignItems: 'center', // Center text
+  alignItems: 'center',
+  backgroundColor: 'rgba(42, 161, 153, 0.03)',
+  padding: 24,
+  borderRadius: 24,
+  ...shadowElevation(2),
 }
 
 const $title: TextStyle = {
-  fontSize: 26, // Slightly larger
+  fontSize: 26,
   lineHeight: 34,
-  color: '#000000',
+  color: '#2AA199',
   marginBottom: 24,
-  fontWeight: '600', // SemiBold works better with Poppins
+  fontWeight: '600',
   letterSpacing: 0,
-  textAlign: 'center', // Center text
+  textAlign: 'center',
 }
 
 const $body: TextStyle = {
   fontSize: 16,
-  lineHeight: 26, // Increased line height for Poppins
+  lineHeight: 26,
   color: '#333333',
   letterSpacing: 0,
   marginBottom: 16,
-  textAlign: 'center', // Center text
+  textAlign: 'center',
 }
 
 const $controlsContainer: ViewStyle = {
@@ -256,6 +273,8 @@ const $controlsContainer: ViewStyle = {
   ...layout.rowBetween,
   backgroundColor: 'rgba(255,255,255,0.95)',
   paddingTop: 16,
+  borderTopWidth: 1,
+  borderTopColor: 'rgba(0,0,0,0.05)',
 }
 
 const $dotsContainer: ViewStyle = {
@@ -267,31 +286,22 @@ const $dot: ViewStyle = {
   width: 8,
   height: 8,
   borderRadius: 4,
-  backgroundColor: 'rgba(255,255,255,0.5)',
+  backgroundColor: 'rgba(42, 161, 153, 0.3)',
 }
 
 const $dotActive: ViewStyle = {
   width: 24,
-  backgroundColor: '#ffffff',
+  backgroundColor: '#2AA199',
 }
 
 const $ctaButton: ViewStyle = {
   ...shadowElevation(4),
   minWidth: 120,
+  backgroundColor: '#2AA199',
 }
 
 const $ctaText: TextStyle = {
-  color: '#333',
+  color: '#FFFFFF',
   fontWeight: 'bold',
-  fontSize: 16,
-}
-
-const $skipButton: ViewStyle = {
-  alignSelf: 'flex-end',
-}
-
-const $skipText: TextStyle = {
-  color: '#ffffff',
-  opacity: 0.8,
   fontSize: 16,
 } 

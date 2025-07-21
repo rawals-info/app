@@ -8,7 +8,7 @@ import { Button } from '@/components/Button'
 import { useAppTheme } from '@/theme/context'
 import type { ThemedStyle } from '@/theme/types'
 import { api } from '@/services/api'
-import { setHasOnboarded } from '@/utils/persistence'
+import { useAuth } from '@/context/AuthContext'
 import { layout, shadowElevation } from '@/theme/styleHelpers'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { getCachedCategory, saveCachedCategory, CachedCategory } from '@/utils/questionCache'
@@ -35,6 +35,7 @@ interface QuestionnaireCategory {
 
 export const QuestionnaireScreen: FC<{ navigation?: any; route?: any }> = ({ navigation, route }) => {
   const { themed, theme } = useAppTheme()
+  const { setIsOnboarded } = useAuth()
   const [category, setCategory] = useState<QuestionnaireCategory | null>(null)
   const [cachedLoaded, setCachedLoaded] = useState(false)
   const [answers, setAnswers] = useState<Record<string, string>>({})
@@ -129,8 +130,9 @@ export const QuestionnaireScreen: FC<{ navigation?: any; route?: any }> = ({ nav
       const summaryResp = await api.getSummary({ goal: selectedGoal, answers: formattedAnswers });
       const summaryData = summaryResp.kind === 'ok' && summaryResp.data?.success ? summaryResp.data.data : { title: 'Thank you!', summary: 'We will personalise your plan next.' };
 
-      // Mark onboarding complete
-      await setHasOnboarded();
+      // Mark onboarding complete both locally and on server
+      await api.completeOnboarding()
+      setIsOnboarded(true)
       
       navigation?.navigate?.('Summary', { ...summaryData, goal: selectedGoal });
     } catch (error) {

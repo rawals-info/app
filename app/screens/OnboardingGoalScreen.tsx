@@ -166,7 +166,7 @@ const $container: ViewStyle = {
   flex: 1,
   backgroundColor: '#FFFFFF',
   paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0,
-  justifyContent: 'space-between', // Ensure space between main content and footer
+  justifyContent: 'space-between',
 }
 
 const $mainContainer: ViewStyle = {
@@ -178,7 +178,11 @@ const $mainContainer: ViewStyle = {
 const $headerContainer: ViewStyle = {
   paddingTop: 16,
   paddingBottom: 8,
-  marginBottom: 8,
+  marginBottom: 24,
+  backgroundColor: 'rgba(42, 161, 153, 0.03)',
+  borderRadius: 16,
+  padding: 24,
+  ...shadowElevation(2),
 }
 
 const $cardsContainer: ViewStyle = {
@@ -194,7 +198,7 @@ const $backButton: ViewStyle = {
   height: 40,
   borderRadius: 20,
   ...layout.center,
-  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+  backgroundColor: 'rgba(42, 161, 153, 0.1)',
   ...shadowElevation(2),
 }
 
@@ -204,25 +208,28 @@ const $heading: ThemedStyle<TextStyle> = () => ({
   textAlign: 'center',
   fontSize: 26,
   lineHeight: 34,
-  fontWeight: '600', // SemiBold works better with Poppins
-  color: '#000000',
+  fontWeight: '600',
+  color: '#2AA199',
   letterSpacing: 0,
 })
 
 const $card: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   borderWidth: 2,
   borderRadius: 16,
-  padding: spacing.md, // Reduced padding
-  marginBottom: spacing.sm, // Reduced margin
+  padding: spacing.md,
+  marginBottom: spacing.sm,
   backgroundColor: '#FFFFFF',
   overflow: 'hidden',
   position: 'relative',
   ...shadowElevation(2),
+  borderColor: 'rgba(42, 161, 153, 0.2)',
 })
 
 const $selectedCard: ViewStyle = {
   transform: [{ scale: 1.02 }],
   ...shadowElevation(4),
+  borderColor: '#2AA199',
+  backgroundColor: 'rgba(42, 161, 153, 0.03)',
 }
 
 const $cardContent: ViewStyle = {
@@ -245,16 +252,16 @@ const $cardTextContainer: ViewStyle = {
 
 const $cardTitle: TextStyle = {
   fontSize: 16,
-  lineHeight: 22, // Reduced line height
-  fontWeight: '500', // Medium works better for Poppins
-  marginBottom: 4, // Reduced margin
-  color: '#000000',
+  lineHeight: 22,
+  fontWeight: '500',
+  marginBottom: 4,
+  color: '#2AA199',
 }
 
 const $cardDescription: TextStyle = {
-  color: '#333333',
-  fontSize: 14, // Smaller font size
-  lineHeight: 20, // Reduced line height
+  color: '#666666',
+  fontSize: 14,
+  lineHeight: 20,
   letterSpacing: 0,
 }
 
@@ -268,4 +275,11 @@ const $footer: ViewStyle = {
 
 const $continueButton: ViewStyle = {
   height: 48,
+  backgroundColor: '#2AA199',
+  opacity: 0.8,
+}
+
+const $continueButtonActive: ViewStyle = {
+  opacity: 1,
+  ...shadowElevation(3),
 } 

@@ -5,7 +5,6 @@
  * and a "main" flow which the user will use once logged in.
  */
 import React, { ComponentProps } from "react"
-import { storage } from "@/utils/storage"
 import { NavigationContainer, NavigatorScreenParams } from "@react-navigation/native"
 import { createNativeStackNavigator, NativeStackScreenProps } from "@react-navigation/native-stack"
 
@@ -21,7 +20,7 @@ import { WelcomeScreen } from "@/screens/WelcomeScreen"
 import { useAppTheme } from "@/theme/context"
 import { SummaryScreen } from "@/screens/SummaryScreen"
 
-import { DemoNavigator, DemoTabParamList } from "./DemoNavigator"
+import { MainNavigator, MainTabParamList } from "./MainNavigator"
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
 
 /**
@@ -41,7 +40,7 @@ export type AppStackParamList = {
   Questionnaire: { goal?: string }
   Summary: { title: string; summary: string; goal: string }
   Signup: undefined
-  Demo: NavigatorScreenParams<DemoTabParamList>
+  Main: NavigatorScreenParams<MainTabParamList>
   // 🔥 Your screens go here
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }
@@ -62,7 +61,7 @@ const Stack = createNativeStackNavigator<AppStackParamList>()
 
 const AppStack = () => {
   const { isAuthenticated } = useAuth()
-  const hasSeenOnboarding = !!storage.getString("onboarding.completed")
+  const { isOnboarded } = useAuth()
 
   const {
     theme: { colors },
@@ -77,7 +76,9 @@ const AppStack = () => {
           backgroundColor: colors.background,
         },
       }}
-      initialRouteName={isAuthenticated ? "Welcome" : hasSeenOnboarding ? "Login" : "Onboarding"}
+      initialRouteName={
+        isAuthenticated ? (isOnboarded ? "Main" : "Onboarding") : "Login"
+      }
     >
       {/* Common screens */}
       <Stack.Screen name="Onboarding" component={OnboardingScreen} />
@@ -87,8 +88,7 @@ const AppStack = () => {
 
       {isAuthenticated ? (
         <>
-          <Stack.Screen name="Welcome" component={WelcomeScreen} />
-          <Stack.Screen name="Demo" component={DemoNavigator} />
+          <Stack.Screen name="Main" component={MainNavigator} />
         </>
       ) : (
         <>

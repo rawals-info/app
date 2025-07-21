@@ -36,12 +36,13 @@ import { useNavigationPersistence } from "./navigators/navigationUtilities"
 import { ThemeProvider } from "./theme/context"
 import { customFontsToLoad } from "./theme/typography"
 import { loadDateFnsLocale } from "./utils/formatDate"
-import * as storage from "./utils/storage"
 import { getAuthToken, hasOnboarded } from "./utils/persistence"
 import { OnboardingGoalScreen } from './screens/OnboardingGoalScreen'
 import { QuestionnaireScreen } from "./screens/QuestionnaireScreen"
 import { SummaryScreen } from "./screens/SummaryScreen"
 import { SignupScreen } from "./screens/SignupScreen"
+import { api } from "./services/api"
+import * as storage from "./utils/storage"
 
 export const NAVIGATION_PERSISTENCE_KEY = "NAVIGATION_STATE"
 
@@ -75,21 +76,28 @@ function RootNavigatorWrapper({
   initialNavigationState: any
   onNavigationStateChange: (state: any | undefined) => void
 }) {
-  const [bootState, setBootState] = useState<"loading" | "onboarding" | "auth" | "app">(
-    "loading",
-  )
+  const [bootState, setBootState] = useState<"loading" | "ready">("loading")
 
-  const { setAuthToken } = useAuth()
+  const { setAuthToken, setIsOnboarded } = useAuth()
 
   useEffect(() => {
     async function bootstrap() {
-      const [token, onboardFlag] = await Promise.all([getAuthToken(), hasOnboarded()])
+      const [token, onboarded] = await Promise.all([getAuthToken(), hasOnboarded()])
 
-      if (!onboardFlag) setBootState("onboarding")
-      else if (token) {
+      let backendOnboardComplete = false
+
+      if (token) {
         setAuthToken(token)
-        setBootState("app")
-      } else setBootState("auth")
+
+        const statusResp = await api.getOnboardingStatus()
+        if (statusResp.kind === 'ok' && statusResp.data?.success) {
+          backendOnboardComplete = statusResp.data.data.isComplete
+        }
+      }
+
+      setIsOnboarded(backendOnboardComplete || onboarded)
+
+      setBootState("ready")
     }
 
     bootstrap()
@@ -123,9 +131,6 @@ function RootNavigatorWrapper({
   }
 
   if (bootState === "loading") return <SplashScreen />
-  if (bootState === "onboarding") return <OnboardingNav />
-  if (bootState === "auth") return WrapSingle(LoginScreen)
-
   return (
     <AppNavigator
       linking={{ prefixes: [prefix], config }}

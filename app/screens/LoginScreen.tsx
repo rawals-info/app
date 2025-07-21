@@ -1,4 +1,4 @@
-import { ComponentType, FC, useEffect, useMemo, useRef, useState } from "react"
+import React, { ComponentType, FC, useEffect, useMemo, useRef, useState } from "react"
 // eslint-disable-next-line no-restricted-imports
 import { Pressable, TextInput, TextStyle, ViewStyle, StatusBar, Platform } from "react-native"
 import { Ionicons } from '@expo/vector-icons'
@@ -11,13 +11,15 @@ import { TextField, type TextFieldAccessoryProps } from "@/components/TextField"
 import { useAuth } from "@/context/AuthContext"
 import { api } from "@/services/api"
 import { saveAuthToken } from "@/utils/persistence"
+// no storage
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useAppTheme } from "@/theme/context"
+import { CommonActions } from "@react-navigation/native"
 import type { ThemedStyle } from "@/theme/types"
 import { layout, shadowElevation } from "@/theme/styleHelpers"
 
 interface LoginScreenProps {
-  navigation?: { navigate: (route: string) => void }
+  navigation?: any
   route?: unknown
 }
 
@@ -28,7 +30,7 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
   const [isAuthPasswordHidden, setIsAuthPasswordHidden] = useState(true)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [attemptsCount, setAttemptsCount] = useState(0)
-  const { authEmail, setAuthEmail, setAuthToken, validationError } = useAuth()
+  const { authEmail, setAuthEmail, setAuthToken, validationError, setUser, setIsOnboarded } = useAuth()
 
   const {
     themed,
@@ -58,6 +60,22 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
       setAuthEmail("")
       await saveAuthToken(result.token as string)
       setAuthToken(result.token as string)
+      setUser(result.user)
+
+      // Fetch onboarding status then navigate
+      const statusResp = await api.getOnboardingStatus()
+      const completed = statusResp.kind === 'ok' && statusResp.data?.success ? statusResp.data.data.isComplete : false
+      setIsOnboarded(completed)
+
+      if (navigation) {
+        const target = completed ? "Main" : "Onboarding"
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: target }],
+          }),
+        )
+      }
     } else {
       // Display API error
       // For simplicity we'll reuse validationError prop to show API issues
@@ -125,7 +143,10 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
           helper={error}
           status={error ? "error" : undefined}
           onSubmitEditing={() => authPasswordInput.current?.focus()}
-          inputWrapperStyle={$inputWrapper}
+          inputWrapperStyle={[
+            $inputWrapper,
+            error && $inputWrapperError
+          ]}
         />
 
         <TextField
@@ -189,15 +210,15 @@ const $backButton: ViewStyle = {
   height: 40,
   borderRadius: 20,
   ...layout.center,
-  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+  backgroundColor: 'rgba(42, 161, 153, 0.1)',
   ...shadowElevation(2),
 }
 
 const $heading: TextStyle = {
   fontSize: 26,
   lineHeight: 34,
-  fontWeight: '600', // SemiBold works better with Poppins
-  color: '#000000',
+  fontWeight: '600',
+  color: '#2AA199',
   letterSpacing: 0,
   marginTop: 80,
   marginBottom: 8,
@@ -207,7 +228,7 @@ const $heading: TextStyle = {
 const $subheading: TextStyle = {
   fontSize: 16,
   lineHeight: 24,
-  color: '#333333',
+  color: '#666666',
   marginBottom: 40,
   textAlign: 'center',
 }
@@ -218,7 +239,7 @@ const $textField: ViewStyle = {
 
 const $inputWrapper: ViewStyle = {
   borderWidth: 2,
-  borderColor: '#DDDDDD',
+  borderColor: 'rgba(42, 161, 153, 0.2)',
   borderRadius: 12,
   backgroundColor: '#FFFFFF',
   paddingHorizontal: 16,
@@ -226,10 +247,27 @@ const $inputWrapper: ViewStyle = {
   ...shadowElevation(1),
 }
 
+const $inputWrapperFocused: ViewStyle = {
+  borderColor: '#2AA199',
+  ...shadowElevation(2),
+}
+
+const $inputWrapperError: ViewStyle = {
+  borderColor: '#FF4D6D',
+  backgroundColor: 'rgba(255, 77, 109, 0.03)',
+}
+
+const $errorText: TextStyle = {
+  color: '#FF4D6D',
+  fontSize: 14,
+  marginTop: 4,
+}
+
 const $loginButton: ViewStyle = {
   height: 50,
   marginTop: 16,
   marginBottom: 24,
+  backgroundColor: '#2AA199',
   ...shadowElevation(3),
 }
 
@@ -237,14 +275,18 @@ const $signupContainer: ViewStyle = {
   flexDirection: 'row',
   justifyContent: 'center',
   marginTop: 8,
+  backgroundColor: 'rgba(42, 161, 153, 0.03)',
+  padding: 16,
+  borderRadius: 12,
 }
 
 const $signupText: TextStyle = {
   fontSize: 16,
-  color: '#333333',
+  color: '#666666',
 }
 
 const $signupLink: TextStyle = {
   fontSize: 16,
   color: '#2AA199',
+  fontWeight: '600',
 }

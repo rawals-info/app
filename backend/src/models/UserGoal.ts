@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional, Sequelize } from 'sequelize';
 import UserProfile from './UserProfile';
+import { sequelize } from '../config/database'
 
 export interface UserGoalAttributes {
   id: string;
@@ -48,5 +49,9 @@ class UserGoal extends Model<UserGoalAttributes, UserGoalCreation> implements Us
     UserGoal.belongsTo(UserProfile, { foreignKey: 'userId', as: 'userProfile' });
   }
 }
+
+// Immediately initialize the model so it is registered with Sequelize
+UserGoal.initialize(sequelize)
+UserGoal.associate()
 
 export default UserGoal; 

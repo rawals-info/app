@@ -140,6 +140,30 @@ export class Api {
   }
 
   /**
+   * Mark onboarding as complete for the authenticated user
+   */
+  async completeOnboarding() {
+    const resp: ApiResponse<any> = await this.apisauce.post('/api/onboarding/complete')
+    if (!resp.ok) {
+      const problem = getGeneralApiProblem(resp)
+      if (problem) return problem
+    }
+    return { kind: 'ok' as const }
+  }
+
+  /**
+   * Fetch onboarding status for authenticated user
+   */
+  async getOnboardingStatus() {
+    const resp: ApiResponse<any> = await this.apisauce.get('/api/onboarding/status')
+    if (!resp.ok) {
+      const problem = getGeneralApiProblem(resp)
+      if (problem) return problem
+    }
+    return { kind: 'ok' as const, data: resp.data }
+  }
+
+  /**
    * Fetch questionnaire questions by category
    */
   async getQuestions(category: string) {

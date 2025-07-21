@@ -1,6 +1,7 @@
 import * as SecureStore from "expo-secure-store"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { Platform } from "react-native"
+import { storage } from "./storage"
 
 // KEYS
 const KEY_AUTH_TOKEN = "authToken"
@@ -42,6 +43,10 @@ export async function clearAuthToken() {
 // Onboarding Flag ---------------------------------------------
 export async function setHasOnboarded() {
   await AsyncStorage.setItem(KEY_HAS_ONBOARDED, "true")
+  // Persist the same flag in MMKV so it can be accessed synchronously
+  try {
+    storage.set("onboarding.completed", "true")
+  } catch {}
 }
 
 export async function hasOnboarded() {

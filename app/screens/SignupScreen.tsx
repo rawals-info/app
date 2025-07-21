@@ -1,4 +1,4 @@
-import { FC, useRef, useState } from "react"
+import React, { FC, useRef, useState } from "react"
 // eslint-disable-next-line no-restricted-imports
 import { Pressable, TextInput, TextStyle, ViewStyle, StatusBar, Platform } from "react-native"
 import { Ionicons } from '@expo/vector-icons'
@@ -10,6 +10,8 @@ import { TextField } from "@/components/TextField"
 import { useAuth } from "@/context/AuthContext"
 import { api } from "@/services/api"
 import { saveAuthToken } from "@/utils/persistence"
+// no storage flag
+import AsyncStorage from "@react-native-async-storage/async-storage"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
@@ -27,7 +29,7 @@ export const SignupScreen: FC<SignupScreenProps> = ({ navigation }) => {
   const [confirmPassword, setConfirmPassword] = useState<string>("")
   const [passwordError, setPasswordError] = useState<string>("")
 
-  const { setAuthToken } = useAuth()
+  const { setAuthToken, setUser, setIsOnboarded } = useAuth()
   const { themed } = useAppTheme()
 
   async function signup() {
@@ -57,6 +59,29 @@ export const SignupScreen: FC<SignupScreenProps> = ({ navigation }) => {
     if (result.kind === "ok") {
       await saveAuthToken(result.token as string)
       setAuthToken(result.token as string)
+      setUser(result.user)
+
+      // Check onboarding status
+      const statusResp = await api.getOnboardingStatus()
+      const completed = statusResp.kind === 'ok' && statusResp.data?.success ? statusResp.data.data.isComplete : false
+      setIsOnboarded(completed)
+
+      // If user selected a goal before signing up, forward it to backend now
+      try {
+        const pendingGoal = await AsyncStorage.getItem("pendingGoal")
+        if (pendingGoal) {
+          await api.setGoal(pendingGoal as any)
+          await AsyncStorage.removeItem("pendingGoal")
+        }
+      } catch {}
+
+      if (navigation?.navigate) {
+        if (completed) {
+           navigation.navigate("Main" as any)
+        } else {
+           navigation.navigate("Onboarding")
+        }
+      }
     } else {
       // eslint-disable-next-line no-console
       console.warn("Signup failed", result)
@@ -138,7 +163,10 @@ export const SignupScreen: FC<SignupScreenProps> = ({ navigation }) => {
           onSubmitEditing={signup}
           helper={passwordError}
           status={passwordError ? "error" : undefined}
-          inputWrapperStyle={$inputWrapper}
+          inputWrapperStyle={[
+            $inputWrapper,
+            passwordError && $inputWrapperError
+          ]}
         />
 
         <Button 
@@ -185,15 +213,15 @@ const $backButton: ViewStyle = {
   height: 40,
   borderRadius: 20,
   ...layout.center,
-  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+  backgroundColor: 'rgba(42, 161, 153, 0.1)',
   ...shadowElevation(2),
 }
 
 const $heading: TextStyle = {
   fontSize: 26,
   lineHeight: 34,
-  fontWeight: '600', // SemiBold works better with Poppins
-  color: '#000000',
+  fontWeight: '600',
+  color: '#2AA199',
   letterSpacing: 0,
   marginTop: 80,
   marginBottom: 8,
@@ -203,7 +231,7 @@ const $heading: TextStyle = {
 const $subheading: TextStyle = {
   fontSize: 16,
   lineHeight: 24,
-  color: '#333333',
+  color: '#666666',
   marginBottom: 32,
   textAlign: 'center',
 }
@@ -214,7 +242,7 @@ const $field: ViewStyle = {
 
 const $inputWrapper: ViewStyle = {
   borderWidth: 2,
-  borderColor: '#DDDDDD',
+  borderColor: 'rgba(42, 161, 153, 0.2)',
   borderRadius: 12,
   backgroundColor: '#FFFFFF',
   paddingHorizontal: 16,
@@ -222,10 +250,27 @@ const $inputWrapper: ViewStyle = {
   ...shadowElevation(1),
 }
 
+const $inputWrapperFocused: ViewStyle = {
+  borderColor: '#2AA199',
+  ...shadowElevation(2),
+}
+
+const $inputWrapperError: ViewStyle = {
+  borderColor: '#FF4D6D',
+  backgroundColor: 'rgba(255, 77, 109, 0.03)',
+}
+
+const $errorText: TextStyle = {
+  color: '#FF4D6D',
+  fontSize: 14,
+  marginTop: 4,
+}
+
 const $signupButton: ViewStyle = {
   height: 50,
   marginTop: 16,
   marginBottom: 24,
+  backgroundColor: '#2AA199',
   ...shadowElevation(3),
 }
 
@@ -233,14 +278,18 @@ const $loginContainer: ViewStyle = {
   flexDirection: 'row',
   justifyContent: 'center',
   marginTop: 8,
+  backgroundColor: 'rgba(42, 161, 153, 0.03)',
+  padding: 16,
+  borderRadius: 12,
 }
 
 const $loginText: TextStyle = {
   fontSize: 16,
-  color: '#333333',
+  color: '#666666',
 }
 
 const $loginLink: TextStyle = {
   fontSize: 16,
   color: '#2AA199',
+  fontWeight: '600',
 } 
