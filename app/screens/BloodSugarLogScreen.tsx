@@ -18,6 +18,9 @@ import { Ionicons } from "@expo/vector-icons"
 import { bloodSugarService } from "@/services/bloodSugarService"
 import { useAuth } from "@/context/AuthContext"
 import { useNavigation } from "@react-navigation/native"
+import type { NavigationProp } from "@react-navigation/native"
+import * as DocumentPicker from 'expo-document-picker'
+import * as ImagePicker from 'expo-image-picker'
 
 const { width } = Dimensions.get("window")
 
@@ -35,15 +38,29 @@ interface BloodSugarReading {
 export const BloodSugarLogScreen = () => {
   const { theme: { colors } } = useAppTheme()
   const { authToken } = useAuth()
-  const navigation = useNavigation()
+  const navigation = useNavigation<NavigationProp<any>>()
   const [reading, setReading] = useState<BloodSugarReading>({
     value: "",
     readingType: "random",
     inputMethod: "manual",
-    timeSinceMeal: "",
+    timeSinceMeal: "1 hour ago",
     notes: "",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [showMealTimePicker, setShowMealTimePicker] = useState(false)
+  const [uploadedFile, setUploadedFile] = useState<any>(null)
+  const [showInputMethodPicker, setShowInputMethodPicker] = useState(false)
+
+  const mealTimeOptions = [
+    { label: "15 minutes ago", value: "15min", minutes: 15 },
+    { label: "30 minutes ago", value: "30min", minutes: 30 },
+    { label: "45 minutes ago", value: "45min", minutes: 45 },
+    { label: "1 hour ago", value: "1hour", minutes: 60 },
+    { label: "1.5 hours ago", value: "1.5hour", minutes: 90 },
+    { label: "2 hours ago", value: "2hour", minutes: 120 },
+    { label: "3 hours ago", value: "3hour", minutes: 180 },
+  ]
 
   const getReadingTypeInfo = (type: ReadingType) => {
     switch (type) {
@@ -91,8 +108,77 @@ export const BloodSugarLogScreen = () => {
         Alert.alert("Connect Device", "Device connection feature coming soon!")
         break
       case "upload":
-        Alert.alert("Upload Report", "Report upload feature coming soon!")
+        handleFileUpload()
         break
+    }
+  }
+
+  const handleFileUpload = async () => {
+    try {
+      // Request permissions for camera/gallery
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+      
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Please grant permission to access your photos to upload lab reports.')
+        return
+      }
+
+      Alert.alert(
+        "Upload Lab Report",
+        "Choose how you'd like to upload your report:",
+        [
+          {
+            text: "Take Photo",
+            onPress: async () => {
+              const result = await ImagePicker.launchCameraAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [4, 3],
+                quality: 0.8,
+              })
+              
+              if (!result.canceled && result.assets[0]) {
+                setUploadedFile(result.assets[0])
+                Alert.alert("Success", "Photo captured! You can now submit your reading.")
+              }
+            }
+          },
+          {
+            text: "Choose from Gallery",
+            onPress: async () => {
+              const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [4, 3],
+                quality: 0.8,
+              })
+              
+              if (!result.canceled && result.assets[0]) {
+                setUploadedFile(result.assets[0])
+                Alert.alert("Success", "Image selected! You can now submit your reading.")
+              }
+            }
+          },
+          {
+            text: "Select Document",
+            onPress: async () => {
+              const result = await DocumentPicker.getDocumentAsync({
+                type: ['image/*', 'application/pdf'],
+                copyToCacheDirectory: true,
+              })
+              
+              if (!result.canceled && result.assets[0]) {
+                setUploadedFile(result.assets[0])
+                Alert.alert("Success", "Document selected! You can now submit your reading.")
+              }
+            }
+          },
+          { text: "Cancel", style: "cancel" }
+        ]
+      )
+    } catch (error) {
+      console.error('Error uploading file:', error)
+      Alert.alert("Error", "Failed to upload file. Please try again.")
     }
   }
 
@@ -118,9 +204,10 @@ export const BloodSugarLogScreen = () => {
     try {
       const numValue = parseFloat(reading.value)
       
+      let response
       if (reading.readingType === "hba1c") {
         // Create HbA1c reading
-        await bloodSugarService.createHbA1cReading({
+        response = await bloodSugarService.createHbA1cReading({
           value: numValue,
           unit: "percent",
           takenAt: new Date().toISOString(),
@@ -128,7 +215,10 @@ export const BloodSugarLogScreen = () => {
         })
       } else {
         // Create regular blood sugar reading
-        await bloodSugarService.createReading({
+        const selectedMealTime = mealTimeOptions.find(option => option.label === reading.timeSinceMeal)
+        const mealDateTime = selectedMealTime ? new Date(Date.now() - selectedMealTime.minutes * 60 * 1000) : null
+        
+        response = await bloodSugarService.createReading({
           value: numValue,
           unit: "mg/dL",
           readingDateTime: new Date().toISOString(),
@@ -136,13 +226,29 @@ export const BloodSugarLogScreen = () => {
           entryMethod: reading.inputMethod === "manual" ? "manual" : "device",
           notes: reading.notes || undefined,
           // Optional custom field for future use
-          ...(reading.readingType === "after_meal" && reading.timeSinceMeal ? { deviceInfo: { timeSinceMeal: reading.timeSinceMeal } } : {})
+          ...(reading.readingType === "after_meal" && reading.timeSinceMeal ? { 
+            deviceInfo: { 
+              timeSinceMeal: reading.timeSinceMeal,
+              mealDateTime: mealDateTime?.toISOString(),
+              minutesSinceMeal: selectedMealTime?.minutes
+            } 
+          } : {})
         })
       }
 
-      Alert.alert("Great Job!", "Your blood sugar reading has been saved.", [
-        { text: "OK", onPress: () => navigation.navigate("Home" as never) }
-      ])
+      console.log("API Response:", response)
+      
+      // Check if response indicates success
+      if (response && (response as any)?.success !== false) {
+        setShowSuccess(true)
+        
+        // Auto-navigate after 2 seconds or immediately if user taps
+        setTimeout(() => {
+          navigation.goBack()
+        }, 2000)
+      } else {
+        throw new Error("Server returned error response")
+      }
     } catch (error) {
       console.error("Error submitting reading:", error)
       Alert.alert("Error", "Failed to log reading. Please try again.")
@@ -153,6 +259,29 @@ export const BloodSugarLogScreen = () => {
 
   const currentTypeInfo = getReadingTypeInfo(reading.readingType)
   const validation = reading.value ? getValueValidation(reading.value, reading.readingType) : { isValid: true, message: "" }
+
+  // If showing success, render success screen
+  if (showSuccess) {
+    return (
+      <Screen preset="fixed" safeAreaEdges={["top"]} contentContainerStyle={$successContainer}>
+        <View style={$successContent}>
+          <Ionicons name="checkmark-circle" size={80} color="#2AA199" />
+          <Text preset="headline" text="Great Job!" style={$successTitle} />
+          <Text preset="body" text="Your blood sugar reading has been saved successfully!" style={$successMessage} />
+          <Text preset="default" text="Redirecting to home..." style={$successSubtext} />
+          
+          <TouchableOpacity 
+            style={$successButton}
+            onPress={() => {
+              navigation.goBack()
+            }}
+          >
+            <Text preset="button" text="Continue" style={$successButtonText} />
+          </TouchableOpacity>
+        </View>
+      </Screen>
+    )
+  }
 
   return (
     <Screen preset="auto" safeAreaEdges={["top"]} contentContainerStyle={$container}>
@@ -187,6 +316,16 @@ export const BloodSugarLogScreen = () => {
             <Text preset="default" text={validation.message} style={$warningText} />
           )}
         </View>
+
+        {/* Choose Another Way Button */}
+        <TouchableOpacity 
+          style={$chooseAnotherWayButton}
+          onPress={() => setShowInputMethodPicker(true)}
+        >
+          <Ionicons name="options" size={20} color="#2AA199" />
+          <Text preset="button" text="Choose another way" style={$chooseAnotherWayText} />
+          <Ionicons name="chevron-forward" size={20} color="#666666" />
+        </TouchableOpacity>
 
         {/* Reading Type Selection */}
         <View style={$section}>
@@ -251,10 +390,13 @@ export const BloodSugarLogScreen = () => {
           <View style={$section}>
             <View style={$mealPrompt}>
               <Ionicons name="time" size={20} color="#FF9500" />
-              <Text preset="body" text="You're logging late at night. When was your last meal?" style={$mealPromptText} />
+              <Text preset="body" text="When was your last meal?" style={$mealPromptText} />
             </View>
-            <TouchableOpacity style={$mealTimeButton}>
-              <Text preset="button" text={reading.timeSinceMeal || "1 hour ago"} style={$mealTimeText} />
+            <TouchableOpacity 
+              style={$mealTimeButton}
+              onPress={() => setShowMealTimePicker(true)}
+            >
+              <Text preset="button" text={reading.timeSinceMeal} style={$mealTimeText} />
               <Ionicons name="chevron-forward" size={20} color={colors.textDim} />
             </TouchableOpacity>
           </View>
@@ -266,35 +408,22 @@ export const BloodSugarLogScreen = () => {
           <Text preset="body" text="Looks like you missed logging yesterday. Want to add it now?" style={$reminderText} />
         </View>
 
-        {/* Input Methods */}
-        <View style={$section}>
-          <Text preset="button" text="Choose another way" style={$sectionTitle} />
-          <View style={$inputMethodsContainer}>
-            <TouchableOpacity
-              style={$inputMethodButton}
-              onPress={() => handleInputMethodSelect("voice")}
+        {/* Show uploaded file if any */}
+        {uploadedFile && (
+          <View style={$uploadedFileCard}>
+            <Ionicons name="document-attach" size={20} color="#2AA199" />
+            <View style={$uploadedFileInfo}>
+              <Text preset="button" text="Uploaded File" style={$uploadedFileTitle} />
+              <Text preset="default" text={uploadedFile.name || 'Lab report'} style={$uploadedFileName} />
+            </View>
+            <TouchableOpacity 
+              style={$removeFileButton}
+              onPress={() => setUploadedFile(null)}
             >
-              <Ionicons name="mic" size={24} color={colors.tint} />
-              <Text preset="button" text="Voice Entry" style={$inputMethodText} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={$inputMethodButton}
-              onPress={() => handleInputMethodSelect("upload")}
-            >
-              <Ionicons name="document" size={24} color={colors.tint} />
-              <Text preset="button" text="Upload Report" style={$inputMethodText} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={$inputMethodButton}
-              onPress={() => handleInputMethodSelect("device")}
-            >
-              <Ionicons name="bluetooth" size={24} color={colors.tint} />
-              <Text preset="button" text="Connect Device" style={$inputMethodText} />
+              <Ionicons name="close-circle" size={20} color="#FF6B6B" />
             </TouchableOpacity>
           </View>
-        </View>
+        )}
 
         {/* Submit Button */}
         <View style={$submitContainer}>
@@ -308,6 +437,116 @@ export const BloodSugarLogScreen = () => {
           />
         </View>
       </ScrollView>
+
+      {/* Meal Time Picker Modal */}
+      {showMealTimePicker && (
+        <View style={$modalOverlay}>
+          <View style={$modalContent}>
+            <Text preset="headline" text="When was your last meal?" style={$modalTitle} />
+            
+            {mealTimeOptions.map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                style={[
+                  $modalOption,
+                  reading.timeSinceMeal === option.label && $modalOptionSelected
+                ]}
+                onPress={() => {
+                  setReading(prev => ({ ...prev, timeSinceMeal: option.label }))
+                  setShowMealTimePicker(false)
+                }}
+              >
+                <Text 
+                  preset="button" 
+                  text={option.label} 
+                  style={[
+                    $modalOptionText,
+                    reading.timeSinceMeal === option.label && $modalOptionTextSelected
+                  ]} 
+                />
+                {reading.timeSinceMeal === option.label && (
+                  <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+                )}
+              </TouchableOpacity>
+            ))}
+            
+            <TouchableOpacity 
+              style={$modalCloseButton}
+              onPress={() => setShowMealTimePicker(false)}
+            >
+              <Text preset="button" text="Cancel" style={$modalCloseText} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* Input Method Picker Modal */}
+      {showInputMethodPicker && (
+        <View style={$modalOverlay}>
+          <View style={$modalContent}>
+            <Text preset="headline" text="Choose another way" style={$modalTitle} />
+            <Text preset="default" text="Select how you'd like to log your reading" style={$modalSubtitle} />
+            
+            <TouchableOpacity
+              style={$inputMethodModalOption}
+              onPress={() => {
+                setShowInputMethodPicker(false)
+                handleInputMethodSelect("voice")
+              }}
+            >
+              <View style={$inputMethodIcon}>
+                <Ionicons name="mic" size={24} color="#2AA199" />
+              </View>
+              <View style={$inputMethodInfo}>
+                <Text preset="button" text="Voice Entry" style={$inputMethodTitle} />
+                <Text preset="default" text="Speak your reading aloud" style={$inputMethodDesc} />
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#666666" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={$inputMethodModalOption}
+              onPress={() => {
+                setShowInputMethodPicker(false)
+                handleInputMethodSelect("upload")
+              }}
+            >
+              <View style={$inputMethodIcon}>
+                <Ionicons name="document" size={24} color="#2AA199" />
+              </View>
+              <View style={$inputMethodInfo}>
+                <Text preset="button" text={uploadedFile ? "Change File" : "Upload Report"} style={$inputMethodTitle} />
+                <Text preset="default" text="Take photo or select file" style={$inputMethodDesc} />
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#666666" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={$inputMethodModalOption}
+              onPress={() => {
+                setShowInputMethodPicker(false)
+                handleInputMethodSelect("device")
+              }}
+            >
+              <View style={$inputMethodIcon}>
+                <Ionicons name="bluetooth" size={24} color="#2AA199" />
+              </View>
+              <View style={$inputMethodInfo}>
+                <Text preset="button" text="Connect Device" style={$inputMethodTitle} />
+                <Text preset="default" text="Sync from glucose meter" style={$inputMethodDesc} />
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#666666" />
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={$modalCloseButton}
+              onPress={() => setShowInputMethodPicker(false)}
+            >
+              <Text preset="button" text="Cancel" style={$modalCloseText} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </Screen>
   )
 }
@@ -554,4 +793,225 @@ const $submitContainer: ViewStyle = {
 const $submitButton: ViewStyle = {
   borderRadius: 16,
   paddingVertical: 18,
+}
+
+const $successContainer: ViewStyle = {
+  flex: 1,
+  backgroundColor: "#F8F9FA",
+  justifyContent: "center",
+  alignItems: "center",
+  padding: 24,
+}
+
+const $successContent: ViewStyle = {
+  alignItems: "center",
+  backgroundColor: "#FFFFFF",
+  borderRadius: 24,
+  padding: 40,
+  ...shadowElevation(3),
+  maxWidth: 320,
+  width: "100%",
+}
+
+const $successTitle: TextStyle = {
+  fontSize: 28,
+  fontWeight: "700",
+  color: "#2AA199",
+  marginTop: 24,
+  marginBottom: 16,
+  textAlign: "center",
+}
+
+const $successMessage: TextStyle = {
+  fontSize: 16,
+  color: "#1A1A1A",
+  textAlign: "center",
+  marginBottom: 12,
+  lineHeight: 24,
+}
+
+const $successSubtext: TextStyle = {
+  fontSize: 14,
+  color: "#666666",
+  textAlign: "center",
+  marginBottom: 32,
+}
+
+const $successButton: ViewStyle = {
+  backgroundColor: "#2AA199",
+  borderRadius: 16,
+  paddingVertical: 16,
+  paddingHorizontal: 32,
+  minWidth: 120,
+}
+
+const $successButtonText: TextStyle = {
+  color: "#FFFFFF",
+  fontSize: 16,
+  fontWeight: "600",
+  textAlign: "center",
+}
+
+const $modalOverlay: ViewStyle = {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: "rgba(0, 0, 0, 0.5)",
+  justifyContent: "center",
+  alignItems: "center",
+  zIndex: 1000,
+}
+
+const $modalContent: ViewStyle = {
+  backgroundColor: "#FFFFFF",
+  borderRadius: 20,
+  padding: 24,
+  margin: 20,
+  maxWidth: 320,
+  width: "100%",
+  ...shadowElevation(5),
+}
+
+const $modalTitle: TextStyle = {
+  fontSize: 20,
+  fontWeight: "600",
+  color: "#1A1A1A",
+  textAlign: "center",
+  marginBottom: 24,
+}
+
+const $modalOption: ViewStyle = {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  padding: 16,
+  borderRadius: 12,
+  marginBottom: 8,
+  backgroundColor: "#F8F9FA",
+  borderWidth: 2,
+  borderColor: "transparent",
+}
+
+const $modalOptionSelected: ViewStyle = {
+  backgroundColor: "#2AA199",
+  borderColor: "#2AA199",
+}
+
+const $modalOptionText: TextStyle = {
+  fontSize: 16,
+  color: "#1A1A1A",
+}
+
+const $modalOptionTextSelected: TextStyle = {
+  color: "#FFFFFF",
+  fontWeight: "600",
+}
+
+const $modalCloseButton: ViewStyle = {
+  marginTop: 16,
+  padding: 16,
+  alignItems: "center",
+}
+
+const $modalCloseText: TextStyle = {
+  fontSize: 16,
+  color: "#666666",
+}
+
+const $uploadedFileCard: ViewStyle = {
+  backgroundColor: "#F0FDF4",
+  borderRadius: 12,
+  padding: 16,
+  flexDirection: "row",
+  alignItems: "center",
+  marginBottom: 24,
+  borderWidth: 1,
+  borderColor: "#2AA199",
+}
+
+const $uploadedFileInfo: ViewStyle = {
+  flex: 1,
+  marginLeft: 12,
+}
+
+const $uploadedFileTitle: TextStyle = {
+  fontSize: 14,
+  color: "#2AA199",
+  fontWeight: "600",
+  marginBottom: 2,
+}
+
+const $uploadedFileName: TextStyle = {
+  fontSize: 12,
+  color: "#666666",
+}
+
+const $removeFileButton: ViewStyle = {
+  padding: 4,
+}
+
+const $chooseAnotherWayButton: ViewStyle = {
+  backgroundColor: "#FFFFFF",
+  borderRadius: 12,
+  padding: 16,
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  marginBottom: 24,
+  ...shadowElevation(1),
+  borderWidth: 1,
+  borderColor: "rgba(0,0,0,0.05)",
+}
+
+const $chooseAnotherWayText: TextStyle = {
+  flex: 1,
+  marginLeft: 12,
+  fontSize: 16,
+  color: "#2AA199",
+  fontWeight: "500",
+}
+
+const $modalSubtitle: TextStyle = {
+  fontSize: 14,
+  color: "#666666",
+  textAlign: "center",
+  marginBottom: 24,
+}
+
+const $inputMethodModalOption: ViewStyle = {
+  flexDirection: "row",
+  alignItems: "center",
+  padding: 16,
+  borderRadius: 12,
+  marginBottom: 12,
+  backgroundColor: "#F8F9FA",
+  borderWidth: 1,
+  borderColor: "rgba(0,0,0,0.05)",
+}
+
+const $inputMethodIcon: ViewStyle = {
+  width: 48,
+  height: 48,
+  borderRadius: 24,
+  backgroundColor: "rgba(42, 161, 153, 0.1)",
+  ...layout.center,
+  marginRight: 16,
+}
+
+const $inputMethodInfo: ViewStyle = {
+  flex: 1,
+}
+
+const $inputMethodTitle: TextStyle = {
+  fontSize: 16,
+  fontWeight: "600",
+  color: "#1A1A1A",
+  marginBottom: 2,
+}
+
+const $inputMethodDesc: TextStyle = {
+  fontSize: 12,
+  color: "#666666",
 } 

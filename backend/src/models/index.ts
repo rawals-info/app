@@ -5,7 +5,10 @@ import HealthProfile from './HealthProfile';
 import User from './User';
 import BloodSugarReading from './BloodSugarReading';
 import Exercise from './Exercise';
-import FoodLog from './FoodLog';
+import FoodItem from './FoodItem';
+import Meal from './Meal';
+import MealItem from './MealItem';
+import MealAiResult from './MealAiResult';
 import Recommendation from './Recommendation';
 import UserGoal from './UserGoal';
 import AdminAuth from './AdminAuth';
@@ -16,7 +19,6 @@ import QuestionAnswer from './QuestionAnswer';
 import RecommendationRule from './RecommendationRule';
 import RecommendationResult from './RecommendationResult';
 import HbA1cReading from './HbA1cReading';
-import Meal from './Meal';
 import CgmDevice from './CgmDevice';
 import CgmSample from './CgmSample';
 import LabReport from './LabReport';
@@ -30,7 +32,10 @@ export {
   User,
   BloodSugarReading,
   Exercise,
-  FoodLog,
+  FoodItem,
+  Meal,
+  MealItem,
+  MealAiResult,
   Recommendation,
   UserGoal,
   AdminAuth,
@@ -41,7 +46,6 @@ export {
   RecommendationRule,
   RecommendationResult,
   HbA1cReading,
-  Meal,
   CgmDevice,
   CgmSample,
   LabReport
@@ -56,7 +60,10 @@ export default {
   User,
   BloodSugarReading,
   Exercise,
-  FoodLog,
+  FoodItem,
+  Meal,
+  MealItem,
+  MealAiResult,
   Recommendation,
   UserGoal,
   AdminAuth,
@@ -67,7 +74,6 @@ export default {
   RecommendationRule,
   RecommendationResult,
   HbA1cReading,
-  Meal,
   CgmDevice,
   CgmSample,
   LabReport

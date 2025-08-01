@@ -20,6 +20,9 @@ import { WelcomeScreen } from "@/screens/WelcomeScreen"
 import { useAppTheme } from "@/theme/context"
 import { SummaryScreen } from "@/screens/SummaryScreen"
 import { BloodSugarLogScreen } from "@/screens/BloodSugarLogScreen"
+import { FoodLogScreen } from "@/screens/FoodLogScreen"
+import { QuickAddMealScreen } from "@/screens/QuickAddMealScreen"
+import { VoiceMealScreen } from "@/screens/VoiceMealScreen"
 
 import { MainNavigator, MainTabParamList } from "./MainNavigator"
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
@@ -43,6 +46,11 @@ export type AppStackParamList = {
   Signup: undefined
   Main: NavigatorScreenParams<MainTabParamList>
   BloodSugarLog: undefined
+  FoodLog: undefined
+  PhotoMeal: { mealData: any }
+  VoiceMeal: { mealData: any }
+  QuickAddMeal: { mealData: any }
+  SameAsLastMeal: { mealData: any; recentMeals: any[] }
   // 🔥 Your screens go here
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }
@@ -94,6 +102,30 @@ const AppStack = () => {
           <Stack.Screen 
             name="BloodSugarLog" 
             component={BloodSugarLogScreen}
+            options={{
+              presentation: 'modal',
+              animation: 'slide_from_bottom'
+            }}
+          />
+          <Stack.Screen 
+            name="FoodLog" 
+            component={FoodLogScreen}
+            options={{
+              presentation: 'modal',
+              animation: 'slide_from_bottom'
+            }}
+          />
+          <Stack.Screen 
+            name="QuickAddMeal" 
+            component={QuickAddMealScreen}
+            options={{
+              presentation: 'modal',
+              animation: 'slide_from_right'
+            }}
+          />
+          <Stack.Screen 
+            name="VoiceMeal" 
+            component={VoiceMealScreen}
             options={{
               presentation: 'modal',
               animation: 'slide_from_bottom'

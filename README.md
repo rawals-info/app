@@ -1,15 +1,67 @@
 # DiabetesBuddy
 
-DiabetesBuddy is a comprehensive mobile application designed to help diabetic patients effectively manage their condition through blood sugar tracking, diet monitoring, exercise tracking, and personalized AI recommendations.
+A comprehensive diabetes management app built with React Native and Expo.
 
-<p align="center">
-  <img src="docs/logo_placeholder.png" alt="DiabetesBuddy Logo" width="200"/>
-</p>
+## Features
 
-## Overview
+### 🩸 Blood Sugar Tracking
+- Log blood sugar readings with different types (fasting, post-meal, random, HbA1c)
+- Multiple input methods (manual, voice, device, file upload)
+- Smart recommendations based on target ranges
+- Visual feedback and success screens
 
-DiabetesBuddy empowers diabetic patients to take control of their health by:
+### 🍽️ Food Logging (NEW!)
+- **Multiple Input Methods**: Photo capture, voice recording, quick manual entry, and "same as last" meal
+- **Smart Meal Type Detection**: Automatically suggests meal type based on time of day
+- **Food Search & Database**: Search from extensive food database with nutritional information
+- **Portion Control**: Multiple unit options (grams, pieces, cups, etc.) with quick portion buttons
+- **Nutritional Analysis**: Automatic calorie and glycemic index calculations
+- **AI Processing Pipeline**: Backend ready for photo analysis and voice transcription
+- **Recent Meals**: Quick access to previously logged meals
 
+### 🏠 Dashboard
+- Latest blood sugar reading with smart time formatting
+- Latest meal information with calorie and item count
+- Health insights and recommendations
+- Quick access to logging features
+
+### 🎯 Onboarding & Goals
+- Personalized questionnaire based on diabetes status
+- Goal setting and progress tracking
+- Motivational affirmations
+
+## Technical Architecture
+
+### Backend
+- **Node.js/Express** with TypeScript
+- **PostgreSQL** database with Sequelize ORM
+- **JWT Authentication** with refresh tokens
+- **Comprehensive API** for blood sugar and meal management
+- **Food Database**: Structured food items with nutritional profiles
+- **AI-Ready Pipeline**: Meal photo analysis and voice transcription endpoints
+- **Relational Design**: Normalized database schema for optimal performance
+
+### Frontend
+- **React Native** with Expo SDK 53
+- **TypeScript** for type safety
+- **React Navigation** for seamless navigation
+- **Beautiful UI** with consistent design system
+- **Camera Integration** for meal photo capture
+- **Voice Recording** capabilities
+- **File Upload** support for various input methods
+
+### Database Schema
+```sql
+-- Core user tables
+auths, user_profiles, health_profiles
+
+-- Health tracking
+blood_sugar_readings, hba1c_readings
+
+-- Food logging system
+food_items          -- Nutritional database
+meals              -- User meal records
+meal_items         -- Foods consumed in each meal
 - **Tracking blood sugar levels** manually or through connected devices
 - **Logging meals** with AI analysis of nutritional content
 - **Recording exercise activities** and their impact on blood sugar

@@ -71,7 +71,15 @@ async function runMigrations(isUndo: boolean = false): Promise<void> {
       logColored(`✅ Successfully reverted migration: ${lastMigration}`, colors.green);
     } else {
       // Apply all migrations' up methods
+      // Fetch already applied migrations
+      const appliedRows = await sequelize.query("SELECT name FROM \"SequelizeMeta\"", { type: (sequelize as any).QueryTypes.SELECT }) as any[];
+      const appliedSet = new Set(appliedRows.map(r => r.name));
+
       for (const migrationFile of migrationFiles) {
+        if (appliedSet.has(migrationFile)) {
+          logColored(`Skipping already applied migration: ${migrationFile}`, colors.yellow);
+          continue;
+        }
         const migrationModule = await import(path.join(migrationsPath, migrationFile));
         
         try {

@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState, useEffect } from "react"
 import { View, ViewStyle, TextStyle, ScrollView, TouchableOpacity } from "react-native"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
@@ -9,14 +9,128 @@ import { layout, shadowElevation } from "@/theme/styleHelpers"
 import { Ionicons } from "@expo/vector-icons"
 import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators/AppNavigator"
+import { bloodSugarService, BloodSugarReading } from "@/services/bloodSugarService"
+import { mealService, MealData } from "@/services/mealService"
+
+interface LatestReading {
+  value: number
+  unit: string
+  readingDateTime: string
+  readingType: string
+}
+
+interface LatestMeal {
+  mealType: string
+  loggedAt: string
+  itemCount: number
+  totalCalories: number
+}
 
 export const HomeScreen = () => {
   const { user } = useAuth()
   const { theme: { colors } } = useAppTheme()
   const navigation = useNavigation<AppStackScreenProps<"Main">["navigation"]>()
+  const [latestReading, setLatestReading] = useState<LatestReading | null>(null)
+  const [latestMeal, setLatestMeal] = useState<LatestMeal | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+
+  // Fetch latest blood sugar reading
+  useEffect(() => {
+    fetchLatestReading()
+    fetchLatestMeal()
+  }, [])
+
+  const fetchLatestReading = async () => {
+    try {
+      setIsLoading(true)
+      const response = await bloodSugarService.getReadings({ limit: 1, offset: 0 })
+      if (response && (response as any)?.data?.readings && (response as any).data.readings.length > 0) {
+        const reading = (response as any).data.readings[0]
+        setLatestReading({
+          value: reading.value,
+          unit: reading.unit,
+          readingDateTime: reading.readingDateTime,
+          readingType: reading.readingType
+        })
+      }
+    } catch (error) {
+      console.error("Error fetching latest reading:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const fetchLatestMeal = async () => {
+    try {
+      const response = await mealService.getMeals({ limit: 1, offset: 0 })
+      if ((response as any)?.data?.meals && (response as any).data.meals.length > 0) {
+        const meal = (response as any).data.meals[0]
+        const itemCount = meal.items?.length || 0
+        const totalCalories = meal.items?.reduce((sum: number, item: any) => sum + (item.caloriesEst || 0), 0) || 0
+        
+        setLatestMeal({
+          mealType: meal.mealType,
+          loggedAt: meal.loggedAt,
+          itemCount,
+          totalCalories
+        })
+      }
+    } catch (error) {
+      console.error("Error fetching latest meal:", error)
+    }
+  }
+
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
+    
+    if (diffInHours < 1) {
+      const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
+      return diffInMinutes <= 1 ? "Just now" : `${diffInMinutes}m ago`
+    } else if (diffInHours < 24) {
+      return `${diffInHours}h ago`
+    } else {
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    }
+  }
+
+  const getReadingTypeDisplay = (type: string) => {
+    switch (type) {
+      case 'fasting': return 'Fasting'
+      case 'after_meal': return 'Post-meal'
+      case 'before_meal': return 'Pre-meal'
+      case 'random': return 'Random'
+      case 'bedtime': return 'Bedtime'
+      default: return type
+    }
+  }
 
   const handleLogBloodSugar = () => {
     navigation.navigate("BloodSugarLog")
+    // Refresh data when returning from logging
+    setTimeout(() => fetchLatestReading(), 1000)
+  }
+
+  const handleLogFood = () => {
+    navigation.navigate("FoodLog")
+    setTimeout(() => fetchLatestMeal(), 1000) // Refresh data
+  }
+
+  const getMealTypeDisplay = (type: string) => {
+    switch (type) {
+      case 'breakfast': return 'Breakfast'
+      case 'brunch': return 'Brunch'
+      case 'lunch': return 'Lunch'
+      case 'dinner': return 'Dinner'
+      case 'snack': return 'Snack'
+      default: return type
+    }
   }
 
   return (
@@ -35,28 +149,52 @@ export const HomeScreen = () => {
               <Ionicons name="pulse" size={24} color={colors.tint} />
             </View>
             <Text preset="button" text="Blood Sugar" style={$statTitle}/>
-            <Text preset="default" text="Not recorded" style={$statValue}/>
+            {isLoading ? (
+              <Text preset="default" text="Loading..." style={$statValue}/>
+            ) : latestReading ? (
+              <>
+                <Text preset="default" text={`${latestReading.value} ${latestReading.unit}`} style={[$statValue, $bloodSugarValue]}/>
+                <Text preset="default" text={getReadingTypeDisplay(latestReading.readingType)} style={$readingType}/>
+                <Text preset="default" text={formatDateTime(latestReading.readingDateTime)} style={$timeAgo}/>
+              </>
+            ) : (
+              <Text preset="default" text="Not recorded" style={$statValue}/>
+            )}
+            {/* Card Action */}
             <View style={$cardAction}>
-              <Text preset="default" text="Tap to log" style={$actionText}/>
-              <Ionicons name="add-circle" size={20} color={colors.tint} />
+              <Ionicons name="chevron-forward" size={20} color="#2AA199" />
             </View>
           </TouchableOpacity>
 
-          <View style={$statCard}>
-            <View style={$iconContainer}>
-              <Ionicons name="walk" size={24} color={colors.tint} />
+          {/* Food Log Card */}
+          <TouchableOpacity style={$statCard} onPress={handleLogFood}>
+            <View style={$statIconContainer}>
+              <Ionicons name="restaurant" size={28} color="#FF6B6B" />
             </View>
-            <Text preset="button" text="Activity" style={$statTitle}/>
-            <Text preset="default" text="No data yet" style={$statValue}/>
-          </View>
+            <Text preset="button" text="Food Log" style={$statTitle}/>
+            {latestMeal ? (
+              <>
+                <Text preset="default" text={getMealTypeDisplay(latestMeal.mealType)} style={[$statValue, $mealValue]}/>
+                <Text preset="default" text={`${latestMeal.itemCount} items • ${latestMeal.totalCalories} cal`} style={$mealDetails}/>
+                <Text preset="default" text={formatDateTime(latestMeal.loggedAt)} style={$timeAgo}/>
+              </>
+            ) : (
+              <Text preset="default" text="Not recorded" style={$statValue}/>
+            )}
+            {/* Card Action */}
+            <View style={$cardAction}>
+              <Ionicons name="chevron-forward" size={20} color="#FF6B6B" />
+            </View>
+          </TouchableOpacity>
 
-          <View style={$statCard}>
+          {/* Goals Card */}
+          <TouchableOpacity style={$statCard} onPress={() => {}}>
             <View style={$iconContainer}>
-              <Ionicons name="restaurant" size={24} color={colors.tint} />
+              <Ionicons name="trophy" size={24} color={colors.tint} />
             </View>
-            <Text preset="button" text="Last Meal" style={$statTitle}/>
-            <Text preset="default" text="Not logged" style={$statValue}/>
-          </View>
+            <Text preset="button" text="Goals" style={$statTitle}/>
+            <Text preset="default" text="Set your health goals" style={$statValue}/>
+          </TouchableOpacity>
         </View>
 
         {/* Quick Actions */}
@@ -153,6 +291,15 @@ const $iconContainer: ViewStyle = {
   marginBottom: 12,
 }
 
+const $statIconContainer: ViewStyle = {
+  width: 48,
+  height: 48,
+  borderRadius: 24,
+  backgroundColor: 'rgba(255, 107, 107, 0.1)',
+  ...layout.center,
+  marginBottom: 12,
+}
+
 const $statTitle: TextStyle = {
   fontSize: 14,
   marginBottom: 4,
@@ -227,4 +374,33 @@ const $fab: ViewStyle = {
   backgroundColor: '#2AA199',
   ...layout.center,
   ...shadowElevation(4),
+}
+
+const $bloodSugarValue: TextStyle = {
+  fontSize: 18,
+  fontWeight: '600',
+  color: '#2AA199',
+  marginBottom: 2,
+}
+
+const $readingType: TextStyle = {
+  fontSize: 12,
+  color: '#666666',
+  marginBottom: 2,
+}
+
+const $timeAgo: TextStyle = {
+  fontSize: 12,
+  color: '#999999',
+}
+
+const $mealValue: TextStyle = {
+  color: '#FF6B6B',
+  textTransform: 'capitalize',
+}
+
+const $mealDetails: TextStyle = {
+  fontSize: 12,
+  color: '#666666',
+  marginBottom: 4,
 } 
