@@ -19,6 +19,7 @@ import { QuestionnaireScreen } from "@/screens/QuestionnaireScreen"
 import { WelcomeScreen } from "@/screens/WelcomeScreen"
 import { useAppTheme } from "@/theme/context"
 import { SummaryScreen } from "@/screens/SummaryScreen"
+import { BloodSugarLogScreen } from "@/screens/BloodSugarLogScreen"
 
 import { MainNavigator, MainTabParamList } from "./MainNavigator"
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
@@ -41,6 +42,7 @@ export type AppStackParamList = {
   Summary: { title: string; summary: string; goal: string }
   Signup: undefined
   Main: NavigatorScreenParams<MainTabParamList>
+  BloodSugarLog: undefined
   // 🔥 Your screens go here
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }
@@ -89,6 +91,14 @@ const AppStack = () => {
       {isAuthenticated ? (
         <>
           <Stack.Screen name="Main" component={MainNavigator} />
+          <Stack.Screen 
+            name="BloodSugarLog" 
+            component={BloodSugarLogScreen}
+            options={{
+              presentation: 'modal',
+              animation: 'slide_from_bottom'
+            }}
+          />
         </>
       ) : (
         <>

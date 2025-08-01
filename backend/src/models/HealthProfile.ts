@@ -15,6 +15,7 @@ const HealthProfile = sequelize.define<HealthProfileInstance, HealthProfileAttri
     userId: {
       type: DataTypes.UUID,
       allowNull: false,
+      unique: true, // enforce 1-to-1 with user_profile
       field: 'user_id',
       references: {
         model: 'user_profiles',

@@ -1,15 +1,23 @@
 import React from "react"
-import { View, ViewStyle, TextStyle, ScrollView } from "react-native"
+import { View, ViewStyle, TextStyle, ScrollView, TouchableOpacity } from "react-native"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
+import { Button } from "@/components/Button"
 import { useAuth } from "@/context/AuthContext"
 import { useAppTheme } from "@/theme/context"
 import { layout, shadowElevation } from "@/theme/styleHelpers"
 import { Ionicons } from "@expo/vector-icons"
+import { useNavigation } from "@react-navigation/native"
+import { AppStackScreenProps } from "@/navigators/AppNavigator"
 
 export const HomeScreen = () => {
   const { user } = useAuth()
   const { theme: { colors } } = useAppTheme()
+  const navigation = useNavigation<AppStackScreenProps<"Main">["navigation"]>()
+
+  const handleLogBloodSugar = () => {
+    navigation.navigate("BloodSugarLog")
+  }
 
   return (
     <Screen preset="fixed" safeAreaEdges={["top"]} contentContainerStyle={$container}>
@@ -22,13 +30,17 @@ export const HomeScreen = () => {
       <ScrollView style={$content} showsVerticalScrollIndicator={false}>
         {/* Quick Stats */}
         <View style={$statsContainer}>
-          <View style={$statCard}>
+          <TouchableOpacity style={$statCard} onPress={handleLogBloodSugar}>
             <View style={$iconContainer}>
               <Ionicons name="pulse" size={24} color={colors.tint} />
             </View>
             <Text preset="button" text="Blood Sugar" style={$statTitle}/>
             <Text preset="default" text="Not recorded" style={$statValue}/>
-          </View>
+            <View style={$cardAction}>
+              <Text preset="default" text="Tap to log" style={$actionText}/>
+              <Ionicons name="add-circle" size={20} color={colors.tint} />
+            </View>
+          </TouchableOpacity>
 
           <View style={$statCard}>
             <View style={$iconContainer}>
@@ -47,6 +59,26 @@ export const HomeScreen = () => {
           </View>
         </View>
 
+        {/* Quick Actions */}
+        <View style={$actionsSection}>
+          <Text preset="button" text="Quick Actions" style={$sectionTitle}/>
+          <Button
+            text="Log Blood Sugar"
+            preset="primary"
+            onPress={handleLogBloodSugar}
+            style={$actionButton}
+            size="small"
+            LeftAccessory={(props) => (
+              <Ionicons 
+                name="add-circle-outline" 
+                size={16} 
+                color="#FFFFFF" 
+                style={{ marginRight: 6 }} 
+              />
+            )}
+          />
+        </View>
+
         {/* Tips Section */}
         <View style={$tipsSection}>
           <Text preset="button" text="Daily Tips" style={$sectionTitle}/>
@@ -56,6 +88,11 @@ export const HomeScreen = () => {
           </View>
         </View>
       </ScrollView>
+
+      {/* Floating Action Button */}
+      <TouchableOpacity style={$fab} onPress={handleLogBloodSugar}>
+        <Ionicons name="add" size={28} color="#FFFFFF" />
+      </TouchableOpacity>
     </Screen>
   )
 }
@@ -124,10 +161,34 @@ const $statTitle: TextStyle = {
 const $statValue: TextStyle = {
   fontSize: 16,
   color: '#666666',
+  marginBottom: 8,
+}
+
+const $cardAction: ViewStyle = {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+}
+
+const $actionText: TextStyle = {
+  fontSize: 12,
+  color: '#2AA199',
+  fontWeight: '500',
+}
+
+const $actionsSection: ViewStyle = {
+  marginTop: 24,
+}
+
+const $actionButton: ViewStyle = {
+  borderRadius: 12,
+  paddingVertical: 12,
+  paddingHorizontal: 16,
 }
 
 const $tipsSection: ViewStyle = {
   marginTop: 24,
+  marginBottom: 100, // Space for FAB
 }
 
 const $sectionTitle: TextStyle = {
@@ -154,4 +215,16 @@ const $tipText: TextStyle = {
   flex: 1,
   fontSize: 14,
   lineHeight: 20,
+}
+
+const $fab: ViewStyle = {
+  position: 'absolute',
+  bottom: 24,
+  right: 24,
+  width: 56,
+  height: 56,
+  borderRadius: 28,
+  backgroundColor: '#2AA199',
+  ...layout.center,
+  ...shadowElevation(4),
 } 

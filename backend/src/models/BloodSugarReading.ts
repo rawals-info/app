@@ -54,6 +54,7 @@ const BloodSugarReading = sequelize.define<BloodSugarReadingInstance>(
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: DataTypes.NOW,
+      field: 'reading_datetime',
     },
     readingType: {
       type: DataTypes.ENUM(
@@ -94,10 +95,12 @@ const BloodSugarReading = sequelize.define<BloodSugarReadingInstance>(
     }
   },
   {
+    tableName: 'blood_sugar_readings',
     timestamps: true,
+    underscored: true,
     indexes: [
       {
-        fields: ['userId', 'readingDateTime'],
+        fields: ['user_id', 'reading_datetime'],
       },
     ],
   },

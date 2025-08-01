@@ -1,19 +1,28 @@
 import { Response } from 'express';
 import { Op } from 'sequelize';
-import { BloodSugarReading, User, Recommendation } from '../models';
+import { BloodSugarReading, Recommendation, UserProfile, HealthProfile } from '../models';
 import { AuthRequest } from '../types';
 
 // Create a new blood sugar reading
 export const createReading = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
-    const userId = req.user?.id;
+    const authId = req.user?.id;
     
-    if (!userId) {
+    if (!authId) {
       return res.status(401).json({
         success: false,
         message: 'Authentication required'
       });
     }
+    
+    const userProfile = await UserProfile.findOne({ where: { authId } });
+    if (!userProfile) {
+      return res.status(400).json({
+        success: false,
+        message: 'User profile not found'
+      });
+    }
+    const userId = userProfile.id;
     
     const { value, unit, readingDateTime, readingType, entryMethod, deviceInfo, notes } = req.body;
 
@@ -50,15 +59,24 @@ export const createReading = async (req: AuthRequest, res: Response): Promise<Re
 // Get all readings for a user with optional filters
 export const getReadings = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
-    const userId = req.user?.id;
+    const authId = req.user?.id;
     
-    if (!userId) {
+    if (!authId) {
       return res.status(401).json({
         success: false,
         message: 'Authentication required'
       });
     }
     
+    const userProfile = await UserProfile.findOne({ where: { authId } });
+    if (!userProfile) {
+      return res.status(400).json({
+        success: false,
+        message: 'User profile not found'
+      });
+    }
+    const userId = userProfile.id;
+
     const { startDate, endDate, readingType, limit = 50, offset = 0 } = req.query;
 
     // Build filter conditions
@@ -112,15 +130,24 @@ export const getReadings = async (req: AuthRequest, res: Response): Promise<Resp
 // Get a specific reading by ID
 export const getReadingById = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
-    const userId = req.user?.id;
+    const authId = req.user?.id;
     
-    if (!userId) {
+    if (!authId) {
       return res.status(401).json({
         success: false,
         message: 'Authentication required'
       });
     }
     
+    const userProfile = await UserProfile.findOne({ where: { authId } });
+    if (!userProfile) {
+      return res.status(400).json({
+        success: false,
+        message: 'User profile not found'
+      });
+    }
+    const userId = userProfile.id;
+
     const { id } = req.params;
 
     // Find reading
@@ -152,15 +179,24 @@ export const getReadingById = async (req: AuthRequest, res: Response): Promise<R
 // Update a reading
 export const updateReading = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
-    const userId = req.user?.id;
+    const authId = req.user?.id;
     
-    if (!userId) {
+    if (!authId) {
       return res.status(401).json({
         success: false,
         message: 'Authentication required'
       });
     }
     
+    const userProfile = await UserProfile.findOne({ where: { authId } });
+    if (!userProfile) {
+      return res.status(400).json({
+        success: false,
+        message: 'User profile not found'
+      });
+    }
+    const userId = userProfile.id;
+
     const { id } = req.params;
     const { value, unit, readingDateTime, readingType, notes } = req.body;
 
@@ -206,15 +242,24 @@ export const updateReading = async (req: AuthRequest, res: Response): Promise<Re
 // Delete a reading
 export const deleteReading = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
-    const userId = req.user?.id;
+    const authId = req.user?.id;
     
-    if (!userId) {
+    if (!authId) {
       return res.status(401).json({
         success: false,
         message: 'Authentication required'
       });
     }
     
+    const userProfile = await UserProfile.findOne({ where: { authId } });
+    if (!userProfile) {
+      return res.status(400).json({
+        success: false,
+        message: 'User profile not found'
+      });
+    }
+    const userId = userProfile.id;
+
     const { id } = req.params;
 
     // Find reading
@@ -249,15 +294,24 @@ export const deleteReading = async (req: AuthRequest, res: Response): Promise<Re
 // Get statistics for blood sugar readings
 export const getStatistics = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
-    const userId = req.user?.id;
+    const authId = req.user?.id;
     
-    if (!userId) {
+    if (!authId) {
       return res.status(401).json({
         success: false,
         message: 'Authentication required'
       });
     }
     
+    const userProfile = await UserProfile.findOne({ where: { authId } });
+    if (!userProfile) {
+      return res.status(400).json({
+        success: false,
+        message: 'User profile not found'
+      });
+    }
+    const userId = userProfile.id;
+
     const { period = '7days' } = req.query;
     
     // Calculate date range based on period
@@ -306,10 +360,10 @@ export const getStatistics = async (req: AuthRequest, res: Response): Promise<Re
     };
     
     if (readings.length > 0) {
-      // Get user's target range
-      const user = await User.findByPk(userId);
-      const targetMin = user?.targetBloodSugarMin || 70;
-      const targetMax = user?.targetBloodSugarMax || 180;
+      // Get target range from the user's health profile (fallback to defaults)
+      const hp = await HealthProfile.findOne({ where: { userId } });
+      const targetMin = hp?.targetBloodSugarMin ?? 70;
+      const targetMax = hp?.targetBloodSugarMax ?? 180;
       
       // Calculate basic stats
       let sum = 0;
@@ -410,12 +464,12 @@ export const getStatistics = async (req: AuthRequest, res: Response): Promise<Re
 // Helper function to check blood sugar level and create recommendations
 const checkBloodSugarLevel = async (userId: string, reading: any): Promise<void> => {
   try {
-    // Get user's target range
-    const user = await User.findByPk(userId);
-    if (!user) return;
+    // Get target range from health profile
+    const hp = await HealthProfile.findOne({ where: { userId } });
+    if (!hp) return;
     
-    const targetMin = user.targetBloodSugarMin || 70;
-    const targetMax = user.targetBloodSugarMax || 180;
+    const targetMin = hp.targetBloodSugarMin ?? 70;
+    const targetMax = hp.targetBloodSugarMax ?? 180;
     
     // Convert to mg/dL if needed for consistent comparison
     let value = reading.value;

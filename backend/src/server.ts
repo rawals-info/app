@@ -22,6 +22,8 @@ import foodLogRoutes from './routes/foodLogRoutes';
 import exerciseRoutes from './routes/exerciseRoutes';
 import recommendationRoutes from './routes/recommendationRoutes';
 import questionnaireRoutes from './routes/questionnaireRoutes';
+import hba1cRoutes from './routes/hba1cRoutes';
+import mealRoutes from './routes/mealRoutes';
 
 // Initialize express app
 const app = express();
@@ -47,6 +49,8 @@ app.use('/api/food-logs', foodLogRoutes);
 app.use('/api/exercises', exerciseRoutes);
 app.use('/api/recommendations', recommendationRoutes);
 app.use('/api/questionnaire', questionnaireRoutes);
+app.use('/api/hba1c', hba1cRoutes);
+app.use('/api/meals', mealRoutes);
 
 // Admin Routes (separate portal)
 app.use('/api/admin/auth', adminAuthRoutes);

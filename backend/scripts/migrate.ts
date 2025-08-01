@@ -3,7 +3,7 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
-import { Sequelize } from 'sequelize';
+import { Sequelize, DataTypes } from 'sequelize';
 import sequelizeConfig from '../src/config/sequelize-cli';
 
 dotenv.config();
@@ -40,6 +40,15 @@ async function runMigrations(isUndo: boolean = false): Promise<void> {
     sequelize = new Sequelize(config.database!, config.username!, config.password!, config);
   }
 
+  // Ensure SequelizeMeta table exists
+  await sequelize.getQueryInterface().createTable('SequelizeMeta', {
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      primaryKey: true
+    }
+  }).catch(() => {/* table might already exist */});
+
   // Get migration files
   const migrationsPath = path.resolve(__dirname, '../src/migrations');
   const migrationFiles = fs.readdirSync(migrationsPath)
@@ -68,6 +77,8 @@ async function runMigrations(isUndo: boolean = false): Promise<void> {
         try {
           logColored(`Applying migration: ${migrationFile}`, colors.cyan);
           await migrationModule.up(sequelize.getQueryInterface());
+          // Record in SequelizeMeta if not already
+          await sequelize.query("INSERT INTO \"SequelizeMeta\" (name) VALUES (:name) ON CONFLICT DO NOTHING", { replacements: { name: migrationFile } });
           logColored(`✅ Successfully applied migration: ${migrationFile}`, colors.green);
         } catch (error: any) {
           if (error.name === 'SequelizeUniqueConstraintError' || 
