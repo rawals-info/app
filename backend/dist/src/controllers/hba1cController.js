@@ -11,12 +11,16 @@ const createReading = async (req, res) => {
         if (!userId) {
             return res.status(401).json({ success: false, message: 'Authentication required' });
         }
+        const userProfile = await models_1.UserProfile.findOne({ where: { authId: userId } });
+        if (!userProfile) {
+            return res.status(400).json({ success: false, message: 'User profile not found' });
+        }
         const { value, takenAt, source } = req.body;
         if (!value || isNaN(value)) {
             return res.status(400).json({ success: false, message: 'Value is required and must be numeric' });
         }
         const reading = await models_1.HbA1cReading.create({
-            userId,
+            userId: userProfile.id,
             value,
             takenAt: takenAt || new Date(),
             source: source || 'manual'
@@ -37,8 +41,13 @@ const getReadings = async (req, res) => {
         if (!userId) {
             return res.status(401).json({ success: false, message: 'Authentication required' });
         }
+        const userProfile = await models_1.UserProfile.findOne({ where: { authId: userId } });
+        if (!userProfile) {
+            return res.status(400).json({ success: false, message: 'User profile not found' });
+        }
+        const profileId = userProfile.id;
         const { startDate, endDate, limit = '50', offset = '0' } = req.query;
-        const where = { userId };
+        const where = { userId: profileId };
         if (startDate && endDate) {
             where.takenAt = { [sequelize_1.Op.between]: [new Date(startDate), new Date(endDate)] };
         }
@@ -70,7 +79,11 @@ const getReadingById = async (req, res) => {
         if (!userId)
             return res.status(401).json({ success: false, message: 'Authentication required' });
         const { id } = req.params;
-        const reading = await models_1.HbA1cReading.findOne({ where: { id, userId } });
+        const userProfile = await models_1.UserProfile.findOne({ where: { authId: userId } });
+        if (!userProfile)
+            return res.status(400).json({ success: false, message: 'User profile not found' });
+        const profileId = userProfile.id;
+        const reading = await models_1.HbA1cReading.findOne({ where: { id, userId: profileId } });
         if (!reading)
             return res.status(404).json({ success: false, message: 'HbA1c reading not found' });
         return res.json({ success: true, data: reading });
@@ -90,7 +103,11 @@ const updateReading = async (req, res) => {
             return res.status(401).json({ success: false, message: 'Authentication required' });
         const { id } = req.params;
         const { value, takenAt, source } = req.body;
-        const reading = await models_1.HbA1cReading.findOne({ where: { id, userId } });
+        const userProfile = await models_1.UserProfile.findOne({ where: { authId: userId } });
+        if (!userProfile)
+            return res.status(400).json({ success: false, message: 'User profile not found' });
+        const profileId = userProfile.id;
+        const reading = await models_1.HbA1cReading.findOne({ where: { id, userId: profileId } });
         if (!reading)
             return res.status(404).json({ success: false, message: 'HbA1c reading not found' });
         await reading.update({
@@ -114,7 +131,11 @@ const deleteReading = async (req, res) => {
         if (!userId)
             return res.status(401).json({ success: false, message: 'Authentication required' });
         const { id } = req.params;
-        const reading = await models_1.HbA1cReading.findOne({ where: { id, userId } });
+        const userProfile = await models_1.UserProfile.findOne({ where: { authId: userId } });
+        if (!userProfile)
+            return res.status(400).json({ success: false, message: 'User profile not found' });
+        const profileId = userProfile.id;
+        const reading = await models_1.HbA1cReading.findOne({ where: { id, userId: profileId } });
         if (!reading)
             return res.status(404).json({ success: false, message: 'HbA1c reading not found' });
         await reading.destroy();

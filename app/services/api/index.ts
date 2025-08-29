@@ -44,6 +44,17 @@ export class Api {
   }
 
   /**
+   * Set the authentication header for API requests
+   */
+  setAuthToken(token: string | null) {
+    if (token) {
+      this.apisauce.setHeader('Authorization', `Bearer ${token}`)
+    } else {
+      this.apisauce.deleteHeader('Authorization')
+    }
+  }
+
+  /**
    * Gets a list of recent React Native Radio episodes.
    */
   async getEpisodes(): Promise<{ kind: "ok"; episodes: EpisodeItem[] } | GeneralApiProblem> {
@@ -111,6 +122,8 @@ export class Api {
     email: string
     password: string
     phoneNumber?: string
+    dateOfBirth?: Date | null
+    gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say' | null
   }) {
     const response: ApiResponse<any> = await this.apisauce.post("/api/auth/register", payload)
 

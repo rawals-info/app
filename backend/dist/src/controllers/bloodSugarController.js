@@ -7,13 +7,21 @@ const models_1 = require("../models");
 const createReading = async (req, res) => {
     var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
-        if (!userId) {
+        const authId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        if (!authId) {
             return res.status(401).json({
                 success: false,
                 message: 'Authentication required'
             });
         }
+        const userProfile = await models_1.UserProfile.findOne({ where: { authId } });
+        if (!userProfile) {
+            return res.status(400).json({
+                success: false,
+                message: 'User profile not found'
+            });
+        }
+        const userId = userProfile.id;
         const { value, unit, readingDateTime, readingType, entryMethod, deviceInfo, notes } = req.body;
         // Create new reading
         const reading = await models_1.BloodSugarReading.create({
@@ -48,13 +56,21 @@ exports.createReading = createReading;
 const getReadings = async (req, res) => {
     var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
-        if (!userId) {
+        const authId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        if (!authId) {
             return res.status(401).json({
                 success: false,
                 message: 'Authentication required'
             });
         }
+        const userProfile = await models_1.UserProfile.findOne({ where: { authId } });
+        if (!userProfile) {
+            return res.status(400).json({
+                success: false,
+                message: 'User profile not found'
+            });
+        }
+        const userId = userProfile.id;
         const { startDate, endDate, readingType, limit = 50, offset = 0 } = req.query;
         // Build filter conditions
         const whereConditions = { userId };
@@ -107,13 +123,21 @@ exports.getReadings = getReadings;
 const getReadingById = async (req, res) => {
     var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
-        if (!userId) {
+        const authId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        if (!authId) {
             return res.status(401).json({
                 success: false,
                 message: 'Authentication required'
             });
         }
+        const userProfile = await models_1.UserProfile.findOne({ where: { authId } });
+        if (!userProfile) {
+            return res.status(400).json({
+                success: false,
+                message: 'User profile not found'
+            });
+        }
+        const userId = userProfile.id;
         const { id } = req.params;
         // Find reading
         const reading = await models_1.BloodSugarReading.findOne({
@@ -144,13 +168,21 @@ exports.getReadingById = getReadingById;
 const updateReading = async (req, res) => {
     var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
-        if (!userId) {
+        const authId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        if (!authId) {
             return res.status(401).json({
                 success: false,
                 message: 'Authentication required'
             });
         }
+        const userProfile = await models_1.UserProfile.findOne({ where: { authId } });
+        if (!userProfile) {
+            return res.status(400).json({
+                success: false,
+                message: 'User profile not found'
+            });
+        }
+        const userId = userProfile.id;
         const { id } = req.params;
         const { value, unit, readingDateTime, readingType, notes } = req.body;
         // Find reading
@@ -193,13 +225,21 @@ exports.updateReading = updateReading;
 const deleteReading = async (req, res) => {
     var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
-        if (!userId) {
+        const authId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        if (!authId) {
             return res.status(401).json({
                 success: false,
                 message: 'Authentication required'
             });
         }
+        const userProfile = await models_1.UserProfile.findOne({ where: { authId } });
+        if (!userProfile) {
+            return res.status(400).json({
+                success: false,
+                message: 'User profile not found'
+            });
+        }
+        const userId = userProfile.id;
         const { id } = req.params;
         // Find reading
         const reading = await models_1.BloodSugarReading.findOne({
@@ -230,15 +270,23 @@ const deleteReading = async (req, res) => {
 exports.deleteReading = deleteReading;
 // Get statistics for blood sugar readings
 const getStatistics = async (req, res) => {
-    var _a;
+    var _a, _b, _c;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
-        if (!userId) {
+        const authId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        if (!authId) {
             return res.status(401).json({
                 success: false,
                 message: 'Authentication required'
             });
         }
+        const userProfile = await models_1.UserProfile.findOne({ where: { authId } });
+        if (!userProfile) {
+            return res.status(400).json({
+                success: false,
+                message: 'User profile not found'
+            });
+        }
+        const userId = userProfile.id;
         const { period = '7days' } = req.query;
         // Calculate date range based on period
         const endDate = new Date();
@@ -282,10 +330,10 @@ const getStatistics = async (req, res) => {
             byDay: {}
         };
         if (readings.length > 0) {
-            // Get user's target range
-            const user = await models_1.User.findByPk(userId);
-            const targetMin = (user === null || user === void 0 ? void 0 : user.targetBloodSugarMin) || 70;
-            const targetMax = (user === null || user === void 0 ? void 0 : user.targetBloodSugarMax) || 180;
+            // Get target range from the user's health profile (fallback to defaults)
+            const hp = await models_1.HealthProfile.findOne({ where: { userId } });
+            const targetMin = (_b = hp === null || hp === void 0 ? void 0 : hp.targetBloodSugarMin) !== null && _b !== void 0 ? _b : 70;
+            const targetMax = (_c = hp === null || hp === void 0 ? void 0 : hp.targetBloodSugarMax) !== null && _c !== void 0 ? _c : 180;
             // Calculate basic stats
             let sum = 0;
             let min = readings[0].value;
@@ -376,13 +424,14 @@ const getStatistics = async (req, res) => {
 exports.getStatistics = getStatistics;
 // Helper function to check blood sugar level and create recommendations
 const checkBloodSugarLevel = async (userId, reading) => {
+    var _a, _b;
     try {
-        // Get user's target range
-        const user = await models_1.User.findByPk(userId);
-        if (!user)
+        // Get target range from health profile
+        const hp = await models_1.HealthProfile.findOne({ where: { userId } });
+        if (!hp)
             return;
-        const targetMin = user.targetBloodSugarMin || 70;
-        const targetMax = user.targetBloodSugarMax || 180;
+        const targetMin = (_a = hp.targetBloodSugarMin) !== null && _a !== void 0 ? _a : 70;
+        const targetMax = (_b = hp.targetBloodSugarMax) !== null && _b !== void 0 ? _b : 180;
         // Convert to mg/dL if needed for consistent comparison
         let value = reading.value;
         if (reading.unit === 'mmol/L') {

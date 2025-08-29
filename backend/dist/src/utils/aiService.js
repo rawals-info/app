@@ -9,7 +9,7 @@ exports.analyzeBloodSugarPatterns = exports.generateExerciseRecommendations = ex
  * @param userProfile - User profile with relevant health data
  * @returns Analysis results with recommendations
  */
-const analyzeFoodIntake = async (foodItems, userProfile) => {
+const analyzeFoodIntake = async (foodItems, _userProfile) => {
     try {
         // This is a simulated AI response
         // In a real implementation, this would call an AI API

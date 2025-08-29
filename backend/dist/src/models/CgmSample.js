@@ -41,7 +41,9 @@ const CgmSample = database_1.sequelize.define('CgmSample', {
         defaultValue: sequelize_1.DataTypes.NOW,
     }
 }, {
+    tableName: 'cgm_samples',
     timestamps: true,
+    underscored: true,
     indexes: [
         { fields: ['userId', 'sampledAt'] },
         { fields: ['deviceId', 'sampledAt'] }

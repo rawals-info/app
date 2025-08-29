@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { Op } from 'sequelize';
 import { Recommendation } from '../models';
 import { AuthRequest } from '../types';
-import { RecommendationRule, RecommendationResult, QuestionCategory } from '../models';
+import { RecommendationRule, RecommendationResult } from '../models';
 import { sequelize } from '../config/database';
 import UserProfile from '../models/UserProfile';
 

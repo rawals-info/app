@@ -13,7 +13,7 @@ export const register = async (req: Request<{}, {}, RegisterRequestBody>, res: R
   const transaction = await sequelize.transaction();
 
   try {
-    const { email, password, firstName, lastName, phoneNumber } = req.body;
+    const { email, password, firstName, lastName, phoneNumber, dateOfBirth, gender } = req.body;
 
     // Check if user already exists
     const existingUser = await Auth.findOne({ where: { email } });
@@ -38,7 +38,9 @@ export const register = async (req: Request<{}, {}, RegisterRequestBody>, res: R
       authId: auth.id,
       firstName,
       lastName,
-      phoneNumber
+      phoneNumber,
+      dateOfBirth,
+      gender
     }, { transaction });
 
     // Create onboarding progress

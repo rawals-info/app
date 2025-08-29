@@ -16,6 +16,7 @@ const UserProfile = database_1.sequelize.define('UserProfile', {
     authId: {
         type: sequelize_1.DataTypes.UUID,
         allowNull: false,
+        unique: true, // enforce 1-to-1 with auths
         field: 'auth_id',
         references: {
             model: 'auths',

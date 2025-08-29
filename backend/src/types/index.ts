@@ -98,6 +98,8 @@ export interface RegisterRequestBody {
   firstName: string;
   lastName: string;
   phoneNumber?: string;
+  dateOfBirth?: Date | null;
+  gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say' | null;
 }
 
 export interface LoginRequestBody {

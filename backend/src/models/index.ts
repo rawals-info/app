@@ -6,6 +6,7 @@ import User from './User';
 import BloodSugarReading from './BloodSugarReading';
 import Exercise from './Exercise';
 import FoodItem from './FoodItem';
+import FoodLog from './FoodLog';
 import Meal from './Meal';
 import MealItem from './MealItem';
 import MealAiResult from './MealAiResult';
@@ -33,6 +34,7 @@ export {
   BloodSugarReading,
   Exercise,
   FoodItem,
+  FoodLog,
   Meal,
   MealItem,
   MealAiResult,
@@ -61,6 +63,7 @@ export default {
   BloodSugarReading,
   Exercise,
   FoodItem,
+  FoodLog,
   Meal,
   MealItem,
   MealAiResult,

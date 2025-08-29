@@ -2,12 +2,14 @@ import { createContext, FC, PropsWithChildren, useCallback, useContext, useMemo 
 import { useMMKVString } from "react-native-mmkv"
 import { api } from "@/services/api"
 import { useState } from "react"
+import { getAuthToken, hasOnboarded } from "@/utils/persistence"
 
 export interface User {
   id: string
   firstName?: string
   lastName?: string
-  email: string
+  email?: string
+  isAnonymous?: boolean
 }
 
 export type AuthContextType = {
@@ -22,6 +24,7 @@ export type AuthContextType = {
   setAuthEmail: (email: string) => void
   logout: () => void
   validationError: string
+  restoreAuthentication: () => Promise<boolean>
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null)
@@ -66,6 +69,32 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
     setUser(undefined)
   }, [setAuthEmail, setAuthToken])
 
+  const restoreAuthentication = useCallback(async () => {
+    try {
+      const [token, onboarded] = await Promise.all([getAuthToken(), hasOnboarded()])
+
+      let backendOnboardComplete = false
+
+      if (token) {
+        setAuthToken(token)
+
+        const statusResp = await api.getOnboardingStatus()
+        if (statusResp.kind === 'ok' && statusResp.data?.success) {
+          backendOnboardComplete = statusResp.data.data.isComplete
+        }
+
+        setOnboardedFlag(backendOnboardComplete || onboarded)
+        return true
+      }
+
+      setOnboardedFlag(onboarded)
+      return false
+    } catch (error) {
+      console.warn("Failed to restore authentication:", error)
+      return false
+    }
+  }, [setAuthToken, setOnboardedFlag])
+
   const validationError = useMemo(() => {
     if (!authEmail || authEmail.length === 0) return "can't be blank"
     if (authEmail.length < 6) return "must be at least 6 characters"
@@ -85,6 +114,7 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
     setAuthEmail,
     logout,
     validationError,
+    restoreAuthentication,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

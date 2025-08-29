@@ -17,7 +17,8 @@ export const getQuestions = async (req: Request, res: Response) => {
 
     const categoryRecord = await QuestionCategory.findOne({
       where: { slug: category },
-      include: [{ model: Question, as: 'questions', order: [['order', 'ASC']] }]
+      include: [{ model: Question, as: 'questions' }],
+      order: [[{ model: Question, as: 'questions' }, 'order', 'ASC']]
     });
 
     if (!categoryRecord) {
@@ -30,7 +31,7 @@ export const getQuestions = async (req: Request, res: Response) => {
         slug: categoryRecord.slug,
         affirmationText: categoryRecord.affirmationText,
         updatedAt: categoryRecord.updatedAt,
-        questions: (categoryRecord.questions as QuestionInstance[] | undefined)?.map((q) => ({
+        questions: ((categoryRecord as any).questions as QuestionInstance[] | undefined)?.map((q) => ({
           id: q.id,
           questionText: q.questionText,
           responseType: q.responseType,

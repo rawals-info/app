@@ -319,7 +319,7 @@ const getFoodStatistics = async (req, res) => {
             snack: 0
         };
         const dailyCalories = {};
-        foodLogs.forEach(log => {
+        foodLogs.forEach((log) => {
             // Add to totals
             totalCalories += log.totalCalories || 0;
             totalCarbs += log.totalCarbs || 0;

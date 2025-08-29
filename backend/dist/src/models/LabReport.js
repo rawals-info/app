@@ -36,7 +36,9 @@ const LabReport = database_1.sequelize.define('LabReport', {
         defaultValue: sequelize_1.DataTypes.NOW,
     },
 }, {
+    tableName: 'lab_reports',
     timestamps: true,
+    underscored: true,
     indexes: [
         { fields: ['userId', 'uploadedAt'] }
     ]

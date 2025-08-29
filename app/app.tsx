@@ -29,7 +29,6 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack"
 import { AuthProvider, useAuth } from "./context/AuthContext"
 import { initI18n } from "./i18n"
 import { AppNavigator } from "./navigators/AppNavigator"
-import { OnboardingScreen } from "./screens/OnboardingScreen"
 import { LoginScreen } from "./screens/LoginScreen"
 import { SplashScreen } from "./screens/SplashScreen"
 import { useNavigationPersistence } from "./navigators/navigationUtilities"
@@ -40,7 +39,7 @@ import { getAuthToken, hasOnboarded } from "./utils/persistence"
 import { OnboardingGoalScreen } from './screens/OnboardingGoalScreen'
 import { QuestionnaireScreen } from "./screens/QuestionnaireScreen"
 import { SummaryScreen } from "./screens/SummaryScreen"
-import { SignupScreen } from "./screens/SignupScreen"
+
 import { api } from "./services/api"
 import * as storage from "./utils/storage"
 
@@ -82,21 +81,8 @@ function RootNavigatorWrapper({
 
   useEffect(() => {
     async function bootstrap() {
-      const [token, onboarded] = await Promise.all([getAuthToken(), hasOnboarded()])
-
-      let backendOnboardComplete = false
-
-      if (token) {
-        setAuthToken(token)
-
-        const statusResp = await api.getOnboardingStatus()
-        if (statusResp.kind === 'ok' && statusResp.data?.success) {
-          backendOnboardComplete = statusResp.data.data.isComplete
-        }
-      }
-
-      setIsOnboarded(backendOnboardComplete || onboarded)
-
+      // Don't auto-authenticate on app start
+      // Let users choose to login or skip from landing page
       setBootState("ready")
     }
 
@@ -118,13 +104,12 @@ function RootNavigatorWrapper({
   function OnboardingNav() {
     return (
       <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Onboarding">
-          <Stack.Screen name="Onboarding" component={OnboardingScreen as any} />
+        <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="OnboardingGoal">
           <Stack.Screen name="OnboardingGoal" component={OnboardingGoalScreen as any} />
           <Stack.Screen name="Questionnaire" component={QuestionnaireScreen as any} />
           <Stack.Screen name="Summary" component={SummaryScreen as any} />
           <Stack.Screen name="Login" component={LoginScreen as any} />
-          <Stack.Screen name="Signup" component={SignupScreen as any} />
+
         </Stack.Navigator>
       </NavigationContainer>
     )

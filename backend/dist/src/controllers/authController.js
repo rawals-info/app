@@ -14,7 +14,7 @@ const database_1 = require("../config/database");
 const register = async (req, res) => {
     const transaction = await database_1.sequelize.transaction();
     try {
-        const { email, password, firstName, lastName, phoneNumber } = req.body;
+        const { email, password, firstName, lastName, phoneNumber, dateOfBirth, gender } = req.body;
         // Check if user already exists
         const existingUser = await models_1.Auth.findOne({ where: { email } });
         if (existingUser) {
@@ -36,7 +36,9 @@ const register = async (req, res) => {
             authId: auth.id,
             firstName,
             lastName,
-            phoneNumber
+            phoneNumber,
+            dateOfBirth,
+            gender
         }, { transaction });
         // Create onboarding progress
         await models_1.OnboardingProgress.create({

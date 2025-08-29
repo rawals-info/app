@@ -1,5 +1,5 @@
 import React, { FC, useState, useEffect } from 'react'
-import { View, Pressable, ViewStyle, TextStyle, StatusBar, Platform, Alert, ScrollView, TextInput } from 'react-native'
+import { View, Pressable, ViewStyle, TextStyle, StatusBar, Platform, Alert, ScrollView, TextInput, Image, ImageStyle } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 
 import { Screen } from '@/components/Screen'
@@ -46,7 +46,8 @@ export const QuestionnaireScreen: FC<{ navigation?: any; route?: any }> = ({ nav
   const goalToCategoryMap: Record<string, CategoryType> = {
     'prevent': 'non_patient',
     'monitor': 'at_risk',
-    'diagnosed': 'patient'
+    'diagnosed': 'patient',
+    'caregiver': 'non_patient' // Placeholder - will use non_patient questions for now
   }
 
   useEffect(() => {
@@ -66,10 +67,18 @@ export const QuestionnaireScreen: FC<{ navigation?: any; route?: any }> = ({ nav
         const result = await api.getQuestions(categorySlug)
         if (result.kind === 'ok' && result.data?.success) {
           const fresh = result.data.data as CachedCategory
+          
+          // Deduplicate questions by ID (safety measure)
+          const uniqueQuestions = fresh.questions?.filter((question, index, arr) => 
+            arr.findIndex(q => q.id === question.id) === index
+          ) || []
+          
+          const deduped = { ...fresh, questions: uniqueQuestions }
+          
           // Compare updatedAt
           if (!cached || new Date(fresh.updatedAt).getTime() > new Date(cached.updatedAt).getTime()) {
-            await saveCachedCategory(categorySlug as CategoryType, fresh)
-            if (isMounted) setCategory(fresh as any)
+            await saveCachedCategory(categorySlug as CategoryType, deduped)
+            if (isMounted) setCategory(deduped as any)
           }
         }
       } catch (e) {
@@ -130,11 +139,11 @@ export const QuestionnaireScreen: FC<{ navigation?: any; route?: any }> = ({ nav
       const summaryResp = await api.getSummary({ goal: selectedGoal, answers: formattedAnswers });
       const summaryData = summaryResp.kind === 'ok' && summaryResp.data?.success ? summaryResp.data.data : { title: 'Thank you!', summary: 'We will personalise your plan next.' };
 
-      // Mark onboarding complete both locally and on server
-      await api.completeOnboarding()
-      setIsOnboarded(true)
+      // Mark onboarding as in progress locally
+      // Complete onboarding will be called after user signup in Summary screen
+      // setIsOnboarded(true) - moved to Summary screen
       
-      navigation?.navigate?.('Summary', { ...summaryData, goal: selectedGoal });
+      navigation?.navigate?.('UserInfo', { ...summaryData, goal: selectedGoal });
     } catch (error) {
       console.error('Error submitting answers:', error)
       Alert.alert('Error', 'Failed to submit answers. Please try again.')
@@ -148,7 +157,7 @@ export const QuestionnaireScreen: FC<{ navigation?: any; route?: any }> = ({ nav
     switch (question.responseType) {
       case 'mcq':
         return (
-          <View style={$optionsContainer}>
+          <View style={$mcqContainer}>
             {question.options?.map((option, index) => {
               const isSelected = answers[question.id] === option
               
@@ -156,14 +165,14 @@ export const QuestionnaireScreen: FC<{ navigation?: any; route?: any }> = ({ nav
                 <Pressable
                   key={index}
                   style={[
-                    $optionButton,
-                    isSelected && { backgroundColor: '#2AA199', borderColor: '#2AA199' }
+                    $mcqOptionButton,
+                    isSelected && { backgroundColor: '#10B981', borderColor: '#10B981' }
                   ]}
                   onPress={() => handleAnswerChange(question.id, option)}
                 >
                   <Text 
                     style={[
-                      $optionText,
+                      $mcqOptionText,
                       isSelected && { color: '#FFFFFF' }
                     ]}
                     text={option}
@@ -194,7 +203,7 @@ export const QuestionnaireScreen: FC<{ navigation?: any; route?: any }> = ({ nav
             <Pressable
               style={[
                 $yesNoButton,
-                answers[question.id] === 'Yes' && { backgroundColor: '#2AA199', borderColor: '#2AA199' }
+                answers[question.id] === 'Yes' && { backgroundColor: '#10B981', borderColor: '#10B981' }
               ]}
               onPress={() => handleAnswerChange(question.id, 'Yes')}
             >
@@ -209,7 +218,7 @@ export const QuestionnaireScreen: FC<{ navigation?: any; route?: any }> = ({ nav
             <Pressable
               style={[
                 $yesNoButton,
-                answers[question.id] === 'No' && { backgroundColor: '#2AA199', borderColor: '#2AA199' }
+                answers[question.id] === 'No' && { backgroundColor: '#10B981', borderColor: '#10B981' }
               ]}
               onPress={() => handleAnswerChange(question.id, 'No')}
             >
@@ -249,13 +258,40 @@ export const QuestionnaireScreen: FC<{ navigation?: any; route?: any }> = ({ nav
           onPress={handleBack} 
           hitSlop={15}
         >
-          <Ionicons name="arrow-back" size={24} color="#2AA199" />
+          <Ionicons name="arrow-back" size={24} color="#000000" />
         </Pressable>
         
-        {/* Main content container */}
-        <View style={$mainContainer}>
+        {/* Main content with scroll */}
+        <ScrollView 
+          style={$scrollView}
+          contentContainerStyle={$scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header with illustration */}
+          <View style={$headerSection}>
+            <Image 
+              source={{ uri: 'https://images.unsplash.com/photo-1559757175-0eb30cd8c063?w=300&h=300&fit=crop&crop=center' }}
+              style={$doctorImage}
+              resizeMode="cover"
+            />
+                      <Text 
+            preset="headline"
+            text="Additional Details" 
+            style={$headerTitle} 
+          />
+          <Text text="Step 2 of 4" style={$stepText} />
+          <View style={$progressBar}>
+            <View style={[$progressFill, { width: '50%' }]} />
+          </View>
+          <Text 
+            preset="body"
+            text="To personalize your experience, please provide a few more details about your lifestyle and health history." 
+            style={$headerSubtitle} 
+          />
+          </View>
+
           {/* Affirmation text */}
-          {category && (
+          {category && category.affirmationText && (
             <View style={$affirmationContainer}>
               <Text 
                 preset="body"
@@ -267,32 +303,28 @@ export const QuestionnaireScreen: FC<{ navigation?: any; route?: any }> = ({ nav
           )}
           
           {/* Questions */}
-          <ScrollView 
-            style={$questionsScrollView}
-            contentContainerStyle={$questionsContainer}
-            showsVerticalScrollIndicator={false}
-          >
+          <View style={$questionsContainer}>
             {category?.questions.map((question, index) => (
-              <View key={question.id} style={$questionCard}>
+              <View key={`${question.id}-${index}`} style={$questionSection}>
                 <Text 
                   preset="body"
                   weight="medium" 
-                  text={`${index + 1}. ${question.questionText}`} 
-                  style={$questionText} 
+                  text={question.questionText} 
+                  style={$questionTitle} 
                 />
                 {renderQuestionInput(question)}
               </View>
             ))}
-          </ScrollView>
-        </View>
+          </View>
+        </ScrollView>
         
         {/* Footer with button */}
         <View style={$footer}>
           <Button
-            text="Continue"
+            text="Submit"
             preset="primary"
             disabled={submitting || !category || Object.keys(answers).length < (category?.questions.length || 0)}
-            style={$continueButton}
+            style={$submitButton}
             onPress={handleSubmit}
           />
         </View>
@@ -315,52 +347,100 @@ const $loadingContainer: ViewStyle = {
   alignItems: 'center',
 }
 
-const $mainContainer: ViewStyle = {
+const $scrollView: ViewStyle = {
   flex: 1,
+}
+
+const $scrollContent: ViewStyle = {
   paddingHorizontal: 24,
-  justifyContent: 'flex-start',
+  paddingTop: 60, // Space for back button
+}
+
+const $headerSection: ViewStyle = {
+  alignItems: 'center',
+  marginBottom: 24,
+  paddingVertical: 16,
+}
+
+const $doctorImage: ImageStyle = {
+  width: 100,
+  height: 100,
+  borderRadius: 50,
+  marginBottom: 16,
+}
+
+const $headerTitle: TextStyle = {
+  fontSize: 24,
+  fontWeight: '600',
+  color: '#1F2937',
+  textAlign: 'center',
+  marginBottom: 8,
+}
+
+const $stepText: TextStyle = {
+  fontSize: 14,
+  color: '#6B7280',
+  textAlign: 'center',
+  marginBottom: 16,
+}
+
+const $progressBar: ViewStyle = {
+  height: 4,
+  backgroundColor: '#E5E7EB',
+  borderRadius: 2,
+  overflow: 'hidden',
+  marginBottom: 16,
+  width: '80%',
+  alignSelf: 'center',
+}
+
+const $progressFill: ViewStyle = {
+  height: '100%',
+  backgroundColor: '#1F2937',
+  borderRadius: 2,
+}
+
+const $headerSubtitle: TextStyle = {
+  fontSize: 16,
+  color: '#6B7280',
+  textAlign: 'center',
+  lineHeight: 24,
+  paddingHorizontal: 16,
 }
 
 const $affirmationContainer: ViewStyle = {
-  paddingTop: 16,
-  paddingBottom: 16,
-  borderBottomWidth: 1,
-  borderBottomColor: 'rgba(0,0,0,0.05)',
+  paddingVertical: 12,
+  paddingHorizontal: 16,
+  backgroundColor: '#F3F4F6',
+  borderRadius: 8,
+  borderLeftWidth: 3,
+  borderLeftColor: '#374151',
   marginBottom: 16,
 }
 
 const $affirmationText: ThemedStyle<TextStyle> = () => ({
   textAlign: 'center',
-  fontSize: 18,
-  lineHeight: 24,
-  fontWeight: '500',
-  fontStyle: 'italic',
-  color: '#2AA199',
-})
-
-const $questionsScrollView: ViewStyle = {
-  flex: 1,
-}
-
-const $questionsContainer: ViewStyle = {
-  paddingBottom: 24,
-}
-
-const $questionCard: ViewStyle = {
-  marginBottom: 20,
-  padding: 16,
-  backgroundColor: '#FFFFFF',
-  borderRadius: 12,
-  borderWidth: 1,
-  borderColor: 'rgba(0,0,0,0.1)',
-  ...shadowElevation(2),
-}
-
-const $questionText: TextStyle = {
   fontSize: 16,
   lineHeight: 22,
-  marginBottom: 16,
-  color: '#000000',
+  fontWeight: '500',
+  fontStyle: 'italic',
+  color: '#374151',
+})
+
+const $questionsContainer: ViewStyle = {
+  paddingBottom: 100, // Space for fixed button
+}
+
+const $questionSection: ViewStyle = {
+  marginBottom: 24,
+}
+
+const $questionTitle: TextStyle = {
+  fontSize: 16,
+  fontWeight: '600',
+  color: '#1F2937',
+  marginBottom: 12,
+  lineHeight: 22,
 }
 
 const $backButton: ViewStyle = {
@@ -368,30 +448,39 @@ const $backButton: ViewStyle = {
   top: Platform.OS === 'android' ? StatusBar.currentHeight || 0 + 16 : 16,
   left: 24,
   zIndex: 10,
-  width: 40,
-  height: 40,
-  borderRadius: 20,
+  width: 44,
+  height: 44,
+  borderRadius: 22,
   ...layout.center,
-  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+  backgroundColor: '#FFFFFF',
+  borderWidth: 1,
+  borderColor: '#E5E7EB',
   ...shadowElevation(2),
 }
 
-const $optionsContainer: ViewStyle = {
+const $mcqContainer: ViewStyle = {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  gap: 8,
   marginTop: 8,
 }
 
-const $optionButton: ViewStyle = {
-  padding: 12,
+const $mcqOptionButton: ViewStyle = {
+  paddingVertical: 12,
+  paddingHorizontal: 16,
   borderRadius: 8,
-  borderWidth: 1,
-  borderColor: '#CCCCCC',
-  marginBottom: 8,
-  backgroundColor: '#F8F8F8',
+  borderWidth: 2,
+  borderColor: '#E5E7EB',
+  backgroundColor: '#FFFFFF',
+  minWidth: 60,
+  alignItems: 'center',
+  ...shadowElevation(1),
 }
 
-const $optionText: TextStyle = {
+const $mcqOptionText: TextStyle = {
   fontSize: 14,
-  color: '#333333',
+  color: '#374151',
+  fontWeight: '500',
 }
 
 const $numericInputContainer: ViewStyle = {
@@ -400,44 +489,51 @@ const $numericInputContainer: ViewStyle = {
 
 const $numericInput: TextStyle = {
   height: 48,
-  borderWidth: 1,
-  borderColor: '#CCCCCC',
+  borderWidth: 2,
+  borderColor: '#E5E7EB',
   borderRadius: 8,
   paddingHorizontal: 12,
-  fontSize: 16,
+  fontSize: 14,
+  backgroundColor: '#FFFFFF',
+  color: '#374151',
+  ...shadowElevation(1),
 }
 
 const $yesNoContainer: ViewStyle = {
   flexDirection: 'row',
-  justifyContent: 'space-between',
+  gap: 12,
   marginTop: 8,
 }
 
 const $yesNoButton: ViewStyle = {
   flex: 1,
-  padding: 12,
+  paddingVertical: 12,
+  paddingHorizontal: 24,
   borderRadius: 8,
-  borderWidth: 1,
-  borderColor: '#CCCCCC',
-  marginHorizontal: 4,
-  backgroundColor: '#F8F8F8',
+  borderWidth: 2,
+  borderColor: '#E5E7EB',
+  backgroundColor: '#FFFFFF',
   alignItems: 'center',
+  ...shadowElevation(1),
 }
 
 const $yesNoText: TextStyle = {
-  fontSize: 14,
-  color: '#333333',
+  fontSize: 16,
+  color: '#374151',
   fontWeight: '500',
 }
 
 const $footer: ViewStyle = {
-  paddingVertical: 12,
+  paddingVertical: 20,
   paddingHorizontal: 24,
-  borderTopWidth: 1,
-  borderTopColor: 'rgba(0,0,0,0.05)',
   backgroundColor: '#FFFFFF',
+  borderTopWidth: 1,
+  borderTopColor: '#E5E7EB',
 }
 
-const $continueButton: ViewStyle = {
-  height: 48,
+const $submitButton: ViewStyle = {
+  height: 56,
+  backgroundColor: '#000000',
+  borderRadius: 12,
+  ...shadowElevation(3),
 } 

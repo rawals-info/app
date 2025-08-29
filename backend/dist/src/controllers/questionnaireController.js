@@ -15,7 +15,8 @@ const getQuestions = async (req, res) => {
         }
         const categoryRecord = await models_1.QuestionCategory.findOne({
             where: { slug: category },
-            include: [{ model: models_1.Question, as: 'questions', order: [['order', 'ASC']] }]
+            include: [{ model: models_1.Question, as: 'questions' }],
+            order: [[{ model: models_1.Question, as: 'questions' }, 'order', 'ASC']]
         });
         if (!categoryRecord) {
             return res.status(404).json({ success: false, message: 'Category not found' });

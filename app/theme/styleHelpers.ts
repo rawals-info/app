@@ -9,10 +9,12 @@ import { ThemedStyle } from "./types"
  * Common shadow styles for elevated components
  */
 export const shadowElevation = (elevation: number = 2): ViewStyle => ({
-  elevation,
+  elevation, // Keep for Android
+  boxShadow: `0px ${elevation}px ${elevation * 2}px rgba(0,0,0,${0.1 + elevation * 0.03})`, // Modern boxShadow
+  // Fallback for older React Native versions
   shadowColor: "#000",
   shadowOffset: { width: 0, height: elevation },
-  shadowOpacity: 0.1 + elevation * 0.03, // Increase opacity with elevation
+  shadowOpacity: 0.1 + elevation * 0.03,
   shadowRadius: elevation * 2,
 })
 

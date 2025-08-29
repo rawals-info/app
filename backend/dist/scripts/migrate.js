@@ -72,6 +72,14 @@ async function runMigrations(isUndo = false) {
     else {
         sequelize = new sequelize_1.Sequelize(config.database, config.username, config.password, config);
     }
+    // Ensure SequelizeMeta table exists
+    await sequelize.getQueryInterface().createTable('SequelizeMeta', {
+        name: {
+            type: sequelize_1.DataTypes.STRING,
+            allowNull: false,
+            primaryKey: true
+        }
+    }).catch(() => { });
     // Get migration files
     const migrationsPath = path_1.default.resolve(__dirname, '../src/migrations');
     const migrationFiles = fs_1.default.readdirSync(migrationsPath)
@@ -92,11 +100,20 @@ async function runMigrations(isUndo = false) {
         }
         else {
             // Apply all migrations' up methods
+            // Fetch already applied migrations
+            const appliedRows = await sequelize.query("SELECT name FROM \"SequelizeMeta\"", { type: sequelize.QueryTypes.SELECT });
+            const appliedSet = new Set(appliedRows.map(r => r.name));
             for (const migrationFile of migrationFiles) {
+                if (appliedSet.has(migrationFile)) {
+                    logColored(`Skipping already applied migration: ${migrationFile}`, colors.yellow);
+                    continue;
+                }
                 const migrationModule = await Promise.resolve(`${path_1.default.join(migrationsPath, migrationFile)}`).then(s => __importStar(require(s)));
                 try {
                     logColored(`Applying migration: ${migrationFile}`, colors.cyan);
                     await migrationModule.up(sequelize.getQueryInterface());
+                    // Record in SequelizeMeta if not already
+                    await sequelize.query("INSERT INTO \"SequelizeMeta\" (name) VALUES (:name) ON CONFLICT DO NOTHING", { replacements: { name: migrationFile } });
                     logColored(`✅ Successfully applied migration: ${migrationFile}`, colors.green);
                 }
                 catch (error) {

@@ -352,7 +352,7 @@ export const getFoodStatistics = async (req: AuthRequest, res: Response): Promis
 
     const dailyCalories: Record<string, number> = {};
     
-    foodLogs.forEach(log => {
+    foodLogs.forEach((log: any) => {
       // Add to totals
       totalCalories += log.totalCalories || 0;
       totalCarbs += log.totalCarbs || 0;

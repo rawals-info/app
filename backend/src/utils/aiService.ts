@@ -90,7 +90,7 @@ interface BloodSugarAnalysis {
  * @param userProfile - User profile with relevant health data
  * @returns Analysis results with recommendations
  */
-const analyzeFoodIntake = async (foodItems: FoodItem[], userProfile: UserProfile): Promise<FoodAnalysis> => {
+const analyzeFoodIntake = async (foodItems: FoodItem[], _userProfile: UserProfile): Promise<FoodAnalysis> => {
   try {
     // This is a simulated AI response
     // In a real implementation, this would call an AI API

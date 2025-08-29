@@ -2,55 +2,49 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
 const database_1 = require("../config/database");
-const CgmDevice = database_1.sequelize.define('CgmDevice', {
+const FoodItem = database_1.sequelize.define('FoodItem', {
     id: {
         type: sequelize_1.DataTypes.UUID,
         defaultValue: sequelize_1.DataTypes.UUIDV4,
         primaryKey: true,
     },
-    userId: {
-        type: sequelize_1.DataTypes.UUID,
+    name: {
+        type: sequelize_1.DataTypes.STRING,
         allowNull: false,
     },
-    manufacturer: {
+    variant: {
         type: sequelize_1.DataTypes.STRING,
         allowNull: true,
     },
-    model: {
-        type: sequelize_1.DataTypes.STRING,
+    baseGi: {
+        type: sequelize_1.DataTypes.INTEGER,
         allowNull: true,
+        field: 'base_gi',
     },
-    serialNumber: {
-        type: sequelize_1.DataTypes.STRING,
+    macroProfile: {
+        type: sequelize_1.DataTypes.JSON,
         allowNull: true,
-        unique: true,
+        field: 'macro_profile',
     },
-    pairedAt: {
-        type: sequelize_1.DataTypes.DATE,
+    culturalTags: {
+        type: sequelize_1.DataTypes.JSON,
         allowNull: true,
+        field: 'cultural_tags',
     },
     createdAt: {
         type: sequelize_1.DataTypes.DATE,
-        allowNull: false,
-        defaultValue: sequelize_1.DataTypes.NOW,
+        field: 'created_at',
     },
     updatedAt: {
         type: sequelize_1.DataTypes.DATE,
-        allowNull: false,
-        defaultValue: sequelize_1.DataTypes.NOW,
+        field: 'updated_at',
     }
 }, {
-    tableName: 'cgm_devices',
+    tableName: 'food_items',
     timestamps: true,
     underscored: true,
     indexes: [
-        {
-            fields: ['userId']
-        },
-        {
-            unique: true,
-            fields: ['serialNumber']
-        }
+        { fields: ['name', 'variant'], unique: true }
     ]
 });
-exports.default = CgmDevice;
+exports.default = FoodItem;

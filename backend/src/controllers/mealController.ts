@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { Meal, MealItem } from '../models';
 import { AuthRequest } from '../types';
 

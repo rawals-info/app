@@ -47,7 +47,9 @@ const HbA1cReading = database_1.sequelize.define('HbA1cReading', {
         defaultValue: sequelize_1.DataTypes.NOW,
     },
 }, {
+    tableName: 'hba1c_readings',
     timestamps: true,
+    underscored: true,
     indexes: [
         {
             fields: ['userId', 'takenAt']

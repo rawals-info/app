@@ -12,10 +12,10 @@ import Config from "@/config"
 import { useAuth } from "@/context/AuthContext"
 import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
 import { LoginScreen } from "@/screens/LoginScreen"
-import { SignupScreen } from "@/screens/SignupScreen"
-import { OnboardingScreen } from "@/screens/OnboardingScreen"
+import { LoginFormScreen } from "@/screens/LoginFormScreen"
 import { OnboardingGoalScreen } from "@/screens/OnboardingGoalScreen"
 import { QuestionnaireScreen } from "@/screens/QuestionnaireScreen"
+import { UserInfoScreen } from "@/screens/UserInfoScreen"
 import { WelcomeScreen } from "@/screens/WelcomeScreen"
 import { useAppTheme } from "@/theme/context"
 import { SummaryScreen } from "@/screens/SummaryScreen"
@@ -39,11 +39,11 @@ import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
 export type AppStackParamList = {
   Welcome: undefined
   Login: undefined
-  Onboarding: undefined
+  LoginForm: undefined
   OnboardingGoal: undefined
   Questionnaire: { goal?: string }
-  Summary: { title: string; summary: string; goal: string }
-  Signup: undefined
+  UserInfo: { title: string; summary: string; goal: string }
+  Summary: { title: string; summary: string; goal: string; userInfo?: any }
   Main: NavigatorScreenParams<MainTabParamList>
   BloodSugarLog: undefined
   FoodLog: undefined
@@ -86,58 +86,52 @@ const AppStack = () => {
           backgroundColor: colors.background,
         },
       }}
-      initialRouteName={
-        isAuthenticated ? (isOnboarded ? "Main" : "Onboarding") : "Login"
-      }
+      initialRouteName="Login"
     >
-      {/* Common screens */}
-      <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+      {/* Landing and Auth screens - always available */}
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="LoginForm" component={LoginFormScreen} />
+      
+      {/* Onboarding screens */}
       <Stack.Screen name="OnboardingGoal" component={OnboardingGoalScreen} />
       <Stack.Screen name="Questionnaire" component={QuestionnaireScreen} />
+      <Stack.Screen name="UserInfo" component={UserInfoScreen} />
       <Stack.Screen name="Summary" component={SummaryScreen} />
 
-      {isAuthenticated ? (
-        <>
-          <Stack.Screen name="Main" component={MainNavigator} />
-          <Stack.Screen 
-            name="BloodSugarLog" 
-            component={BloodSugarLogScreen}
-            options={{
-              presentation: 'modal',
-              animation: 'slide_from_bottom'
-            }}
-          />
-          <Stack.Screen 
-            name="FoodLog" 
-            component={FoodLogScreen}
-            options={{
-              presentation: 'modal',
-              animation: 'slide_from_bottom'
-            }}
-          />
-          <Stack.Screen 
-            name="QuickAddMeal" 
-            component={QuickAddMealScreen}
-            options={{
-              presentation: 'modal',
-              animation: 'slide_from_right'
-            }}
-          />
-          <Stack.Screen 
-            name="VoiceMeal" 
-            component={VoiceMealScreen}
-            options={{
-              presentation: 'modal',
-              animation: 'slide_from_bottom'
-            }}
-          />
-        </>
-      ) : (
-        <>
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="Signup" component={SignupScreen} />
-        </>
-      )}
+      {/* Main app screens */}
+      <Stack.Screen name="Main" component={MainNavigator} />
+      <Stack.Screen 
+        name="BloodSugarLog" 
+        component={BloodSugarLogScreen}
+        options={{
+          presentation: 'modal',
+          animation: 'slide_from_bottom'
+        }}
+      />
+      <Stack.Screen 
+        name="FoodLog" 
+        component={FoodLogScreen}
+        options={{
+          presentation: 'modal',
+          animation: 'slide_from_bottom'
+        }}
+      />
+      <Stack.Screen 
+        name="QuickAddMeal" 
+        component={QuickAddMealScreen}
+        options={{
+          presentation: 'modal',
+          animation: 'slide_from_right'
+        }}
+      />
+      <Stack.Screen 
+        name="VoiceMeal" 
+        component={VoiceMealScreen}
+        options={{
+          presentation: 'modal',
+          animation: 'slide_from_bottom'
+        }}
+      />
 
       {/** 🔥 Your screens go here */}
       {/* IGNITE_GENERATOR_ANCHOR_APP_STACK_SCREENS */}

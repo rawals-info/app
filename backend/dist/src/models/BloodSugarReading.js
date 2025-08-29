@@ -29,6 +29,7 @@ const BloodSugarReading = database_1.sequelize.define('BloodSugarReading', {
         type: sequelize_1.DataTypes.DATE,
         allowNull: false,
         defaultValue: sequelize_1.DataTypes.NOW,
+        field: 'reading_datetime',
     },
     readingType: {
         type: sequelize_1.DataTypes.ENUM('fasting', 'before_meal', 'after_meal', 'before_exercise', 'after_exercise', 'bedtime', 'random', 'continuous_monitor'),
@@ -59,10 +60,12 @@ const BloodSugarReading = database_1.sequelize.define('BloodSugarReading', {
         defaultValue: sequelize_1.DataTypes.NOW,
     }
 }, {
+    tableName: 'blood_sugar_readings',
     timestamps: true,
+    underscored: true,
     indexes: [
         {
-            fields: ['userId', 'readingDateTime'],
+            fields: ['user_id', 'reading_datetime'],
         },
     ],
 });

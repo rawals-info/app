@@ -1,6 +1,6 @@
 import React, { FC, useState } from 'react'
 // eslint-disable-next-line no-restricted-imports
-import { View, Pressable, ViewStyle, TextStyle, StyleSheet, StatusBar, Platform, Alert, Dimensions } from 'react-native'
+import { View, Pressable, ViewStyle, TextStyle, StyleSheet, StatusBar, Platform, Alert, Dimensions, Image, ImageStyle, ScrollView } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 
 import { Screen } from '@/components/Screen'
@@ -18,26 +18,36 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 const { height } = Dimensions.get('window')
 
 interface Card {
-  id: 'prevent' | 'monitor' | 'diagnosed'
+  id: 'prevent' | 'monitor' | 'diagnosed' | 'caregiver'
   title: string
   description: string
+  image: string
 }
 
 const CARDS: Card[] = [
   { 
     id: 'prevent', 
     title: "I'm healthy but want to prevent diabetes", 
-    description: 'Learn preventive measures and healthy habits to maintain your well-being.'
+    description: 'Learn preventive measures and healthy habits to maintain your well-being.',
+    image: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=300&fit=crop&crop=center'
   },
   { 
     id: 'monitor', 
     title: 'I sometimes have high sugar levels', 
-    description: 'Track your glucose levels and get personalized insights to maintain balance.'
+    description: 'Track your glucose levels and get personalized insights to maintain balance.',
+    image: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=300&fit=crop&crop=center'
   },
   { 
     id: 'diagnosed', 
     title: "I've been diagnosed with pre/diabetes", 
-    description: 'Access tools and guidance to effectively manage your condition day to day.'
+    description: 'Access tools and guidance to effectively manage your condition day to day.',
+    image: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=300&fit=crop&crop=center'
+  },
+  { 
+    id: 'caregiver', 
+    title: "I'm a caregiver", 
+    description: "I'm supporting a loved one with diabetes and want to learn more about their condition.",
+    image: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=300&fit=crop&crop=center'
   },
 ]
 
@@ -55,15 +65,25 @@ export const OnboardingGoalScreen: FC<{ navigation?: any }> = ({ navigation }) =
       navigation.goBack();
     } else {
       try {
-        navigation.navigate('Onboarding');
+        navigation.navigate('Login');
       } catch (error) {
-        navigation.replace('Onboarding');
+        navigation.replace('Login');
       }
     }
   }
 
   async function handleContinue() {
     if (!selectedGoal) return
+    
+    // Block caregiver option - coming soon
+    if (selectedGoal === 'caregiver') {
+      Alert.alert(
+        'Coming Soon!', 
+        'Caregiver support is under development. Please check back later or choose another option.',
+        [{ text: 'OK' }]
+      )
+      return
+    }
     
     const token = await getAuthToken()
     if (token) {
@@ -72,7 +92,7 @@ export const OnboardingGoalScreen: FC<{ navigation?: any }> = ({ navigation }) =
       await AsyncStorage.setItem('pendingGoal', selectedGoal)
     }
     
-    // Navigate to questionnaire screen instead of Login
+    // Navigate to questionnaire screen for other options
     navigation?.navigate?.('Questionnaire', { goal: selectedGoal })
   }
 
@@ -86,11 +106,15 @@ export const OnboardingGoalScreen: FC<{ navigation?: any }> = ({ navigation }) =
           onPress={handleBack} 
           hitSlop={15}
         >
-          <Ionicons name="arrow-back" size={24} color="#2AA199" />
+          <Ionicons name="arrow-back" size={24} color="#000000" />
         </Pressable>
         
-        {/* Main content container with fixed height */}
-        <View style={$mainContainer}>
+        {/* Main content container with scrollable content */}
+        <ScrollView 
+          style={$scrollView}
+          contentContainerStyle={$scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Header */}
           <View style={$headerContainer}>
             <Text 
@@ -98,9 +122,13 @@ export const OnboardingGoalScreen: FC<{ navigation?: any }> = ({ navigation }) =
               text="Why are you here today?" 
               style={themed($heading)} 
             />
+            <Text text="Step 1 of 4" style={$stepText} />
+            <View style={$progressBar}>
+              <View style={[$progressFill, { width: '25%' }]} />
+            </View>
           </View>
           
-          {/* Cards - with fixed layout */}
+          {/* Cards - scrollable layout */}
           <View style={$cardsContainer}>
             {CARDS.map((card) => {
               const isSelected = selectedGoal === card.id
@@ -109,43 +137,50 @@ export const OnboardingGoalScreen: FC<{ navigation?: any }> = ({ navigation }) =
                 <Pressable
                   key={card.id}
                   style={[
-                    themed($card),
-                    isSelected && $selectedCard,
-                    { borderColor: isSelected ? "#2AA199" : theme.colors.border }
+                    $card,
+                    isSelected && $selectedCard
                   ]}
                   onPress={() => setSelectedGoal(card.id)}
                 >
                   <View style={$cardContent}>
-                    <View style={[
-                      $checkCircle, 
-                      { borderColor: isSelected ? "#2AA199" : "#CCCCCC" },
-                      isSelected && { backgroundColor: "#2AA199" }
-                    ]}>
-                      {isSelected && <Ionicons name="checkmark" size={16} color="white" />}
-                    </View>
+                    <Image 
+                      source={{ uri: card.image }}
+                      style={$cardImage}
+                      resizeMode="cover"
+                    />
                     
-                    <View style={$cardTextContainer}>
-                      <Text 
-                        preset="button"
-                        text={card.title} 
-                        weight="medium" 
-                        style={[
-                          $cardTitle,
-                          isSelected && { color: "#2AA199" }
-                        ]} 
-                      />
-                      <Text 
-                        preset="caption"
-                        text={card.description} 
-                        style={$cardDescription} 
-                      />
+                    <View style={$cardTextSection}>
+                      <View style={$cardTextContainer}>
+                        <Text 
+                          preset="button"
+                          text={card.title} 
+                          weight="medium" 
+                          style={[
+                            $cardTitle,
+                            isSelected && $cardTitleSelected
+                          ]} 
+                        />
+                        <Text 
+                          preset="caption"
+                          text={card.description} 
+                          style={$cardDescription} 
+                        />
+                      </View>
+                      
+                      <View style={[
+                        $checkCircle, 
+                        { borderColor: isSelected ? "#000000" : "#CCCCCC" },
+                        isSelected && { backgroundColor: "#000000" }
+                      ]}>
+                        {isSelected && <Ionicons name="checkmark" size={16} color="white" />}
+                      </View>
                     </View>
                   </View>
                 </Pressable>
               )
             })}
           </View>
-        </View>
+        </ScrollView>
         
         {/* Footer with button */}
         <View style={$footer}>
@@ -169,24 +204,26 @@ const $container: ViewStyle = {
   justifyContent: 'space-between',
 }
 
-const $mainContainer: ViewStyle = {
+const $scrollView: ViewStyle = {
   flex: 1,
+}
+
+const $scrollContent: ViewStyle = {
   paddingHorizontal: 24,
-  justifyContent: 'flex-start',
+  paddingBottom: 24,
 }
 
 const $headerContainer: ViewStyle = {
-  paddingTop: 16,
-  paddingBottom: 8,
+  paddingTop: 60, // Space for back button
+  paddingHorizontal: 24,
+  paddingBottom: 16,
   marginBottom: 24,
-  backgroundColor: 'rgba(42, 161, 153, 0.03)',
-  borderRadius: 16,
-  padding: 24,
-  ...shadowElevation(2),
+  backgroundColor: '#FFFFFF',
 }
 
 const $cardsContainer: ViewStyle = {
-  justifyContent: 'center',
+  gap: 12,
+  paddingBottom: 100, // Space for button
 }
 
 const $backButton: ViewStyle = {
@@ -198,43 +235,80 @@ const $backButton: ViewStyle = {
   height: 40,
   borderRadius: 20,
   ...layout.center,
-  backgroundColor: 'rgba(42, 161, 153, 0.1)',
-  ...shadowElevation(2),
+  backgroundColor: '#F8F8F8',
+  borderWidth: 1,
+  borderColor: '#E0E0E0',
+  ...shadowElevation(1),
 }
 
 const $heading: ThemedStyle<TextStyle> = () => ({
-  marginTop: 24,
-  marginBottom: 16,
+  marginTop: 8,
+  marginBottom: 8,
   textAlign: 'center',
-  fontSize: 26,
-  lineHeight: 34,
+  fontSize: 24,
+  lineHeight: 32,
   fontWeight: '600',
-  color: '#2AA199',
-  letterSpacing: 0,
+  color: '#1F2937',
+  letterSpacing: -0.5,
 })
 
-const $card: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+const $stepText: TextStyle = {
+  fontSize: 14,
+  color: '#6B7280',
+  textAlign: 'center',
+  marginBottom: 16,
+}
+
+const $progressBar: ViewStyle = {
+  height: 4,
+  backgroundColor: '#E5E7EB',
+  borderRadius: 2,
+  overflow: 'hidden',
+  marginBottom: 16,
+  width: '80%',
+  alignSelf: 'center',
+}
+
+const $progressFill: ViewStyle = {
+  height: '100%',
+  backgroundColor: '#1F2937',
+  borderRadius: 2,
+}
+
+const $card: ViewStyle = {
   borderWidth: 2,
   borderRadius: 16,
-  padding: spacing.md,
-  marginBottom: spacing.sm,
   backgroundColor: '#FFFFFF',
   overflow: 'hidden',
-  position: 'relative',
+  borderColor: '#E5E5E5',
   ...shadowElevation(2),
-  borderColor: 'rgba(42, 161, 153, 0.2)',
-})
+}
 
 const $selectedCard: ViewStyle = {
-  transform: [{ scale: 1.02 }],
-  ...shadowElevation(4),
-  borderColor: '#2AA199',
-  backgroundColor: 'rgba(42, 161, 153, 0.03)',
+  transform: [{ scale: 1.01 }],
+  ...shadowElevation(8),
+  borderColor: '#000000',
+  backgroundColor: '#FAFAFA',
 }
 
 const $cardContent: ViewStyle = {
+  flexDirection: 'column',
+}
+
+const $cardImage: ImageStyle = {
+  width: '100%',
+  height: 100,
+}
+
+const $cardTextSection: ViewStyle = {
   flexDirection: 'row',
-  alignItems: 'center',
+  alignItems: 'flex-start',
+  padding: 16,
+}
+
+const $cardTextContainer: ViewStyle = {
+  flex: 1,
+  paddingRight: 16,
 }
 
 const $checkCircle: ViewStyle = {
@@ -242,44 +316,40 @@ const $checkCircle: ViewStyle = {
   height: 24,
   borderRadius: 12,
   borderWidth: 2,
-  marginRight: 14,
   ...layout.center,
-}
-
-const $cardTextContainer: ViewStyle = {
-  flex: 1,
+  marginTop: 4,
 }
 
 const $cardTitle: TextStyle = {
   fontSize: 16,
   lineHeight: 22,
-  fontWeight: '500',
-  marginBottom: 4,
-  color: '#2AA199',
+  fontWeight: '600',
+  marginBottom: 6,
+  color: '#000000',
+}
+
+const $cardTitleSelected: TextStyle = {
+  color: '#000000',
 }
 
 const $cardDescription: TextStyle = {
-  color: '#666666',
+  color: '#6B7280',
   fontSize: 14,
   lineHeight: 20,
   letterSpacing: 0,
 }
 
 const $footer: ViewStyle = {
-  paddingVertical: 12,
+  paddingVertical: 16,
   paddingHorizontal: 24,
   borderTopWidth: 1,
-  borderTopColor: 'rgba(0,0,0,0.05)',
+  borderTopColor: '#F0F0F0',
   backgroundColor: '#FFFFFF',
 }
 
 const $continueButton: ViewStyle = {
-  height: 48,
-  backgroundColor: '#2AA199',
-  opacity: 0.8,
-}
-
-const $continueButtonActive: ViewStyle = {
-  opacity: 1,
+  height: 56,
+  backgroundColor: '#000000',
+  borderRadius: 12,
   ...shadowElevation(3),
 } 
